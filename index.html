@@ -5,87 +5,192 @@
 <title>ALF Wallet Pro</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f5f5}
-.header{padding:20px;background:white}
-.balance{font-size:32px;font-weight:bold}
-.change{color:green}
-.actions{display:flex;justify-content:space-around;margin:15px}
-.card{background:#eee;padding:15px;border-radius:15px;text-align:center;width:70px}
-.section{background:white;padding:10px;margin-top:10px}
-.token{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0c0f14;
+  color:white;
+}
+
+/* HEADER */
+.header{
+  padding:20px;
+}
+
+.balance{
+  font-size:34px;
+  font-weight:bold;
+}
+
+.change{
+  color:#00ff88;
+  margin-top:5px;
+}
+
+/* ACTION BUTTONS */
+.actions{
+  display:flex;
+  justify-content:space-between;
+  margin:15px;
+}
+
+.card{
+  background:#1a1f2b;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+  width:70px;
+  cursor:pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover{
+  transform: scale(1.05);
+  box-shadow:0 0 10px #1f6feb;
+}
+
+/* TOKENS */
+.section{
+  background:#11151c;
+  margin:10px;
+  padding:10px;
+  border-radius:12px;
+}
+
+.token{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid #222;
+}
+
+/* BUTTONS */
+button{
+  background:#1f6feb;
+  border:none;
+  padding:8px 10px;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+button:hover{
+  transform: scale(1.05);
+  box-shadow:0 0 8px #1f6feb;
+}
+
+/* FLOAT BUTTON */
 .float{
-position:fixed;bottom:70px;left:50%;
-transform:translateX(-50%);
-background:blue;color:white;
-width:60px;height:60px;border-radius:50%;
-font-size:30px;display:flex;align-items:center;justify-content:center;
+  position:fixed;
+  bottom:70px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#1f6feb;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  font-size:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
 }
+
+/* NAV */
 .nav{
-position:fixed;bottom:0;width:100%;
-display:flex;justify-content:space-around;
-background:white;padding:10px 0;border-top:1px solid #ddd;
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  background:#0c0f14;
+  padding:10px 0;
+  border-top:1px solid #222;
+  font-size:12px;
 }
-input{padding:5px;width:100px}
-button{margin:3px}
+.nav div{
+  text-align:center;
+  cursor:pointer;
+}
+.nav div:hover{
+  color:#1f6feb;
+}
+
+input{
+  padding:5px;
+  width:100px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div class="balance">$<span id="usd">0</span></div>
-  <div class="change">ALF Balance: <span id="alf">0</span></div>
-
+  <div class="change">+2.45% Today</div>
   <button onclick="connectBNB()">Connect BNB</button>
   <button onclick="connectTRON()">Connect TRON</button>
 </div>
 
+<!-- ACTION BUTTONS -->
 <div class="actions">
-  <div class="card" onclick="buy()">💰<br>Buy</div>
-  <div class="card" onclick="swap()">🔄<br>Swap</div>
-  <div class="card" onclick="send()">📤<br>Send</div>
-  <div class="card" onclick="receive()">📥<br>Receive</div>
+  <div class="card" onclick="buy()">💰<br><small>Buy</small></div>
+  <div class="card" onclick="swap()">🔄<br><small>Swap</small></div>
+  <div class="card" onclick="send()">📤<br><small>Send</small></div>
+  <div class="card" onclick="receive()">📥<br><small>Receive</small></div>
 </div>
 
+<!-- TOKENS -->
 <div class="section">
-  <h3>Tokens</h3>
-
+  <h3>Assets</h3>
   <div class="token">
-    <div>BNB<br><small id="bnbPrice"></small></div>
+    <div>
+      <b>BNB</b><br>
+      <small id="bnbPrice"></small>
+    </div>
     <div id="bnbBal"></div>
   </div>
 
   <div class="token">
-    <div>ALF Token</div>
+    <div>
+      <b>ALF</b><br>
+      <small>$0.10</small>
+    </div>
     <div id="alfBal"></div>
   </div>
 
   <div class="token">
-    <div>TRX<br><small id="trxPrice"></small></div>
+    <div>
+      <b>TRX</b><br>
+      <small id="trxPrice"></small>
+    </div>
     <div id="trxBal"></div>
   </div>
 </div>
 
+<!-- STAKING -->
 <div class="section">
   <h3>Stake ALF</h3>
   <p>Staked: <span id="staked">0</span> ALF</p>
   <p>Reward: <span id="reward">0</span> ALF</p>
-
   <input id="stakeInput" type="number" placeholder="Amount"><br>
-
   <button onclick="stake()">Stake</button>
   <button onclick="unstake()">Unstake</button>
   <button onclick="claim()">Claim</button>
 </div>
 
+<!-- EARN & REFERRAL -->
 <div class="section">
   <h3>Earn & Referral</h3>
   <button onclick="invite()">Invite Friend (+50 ALF)</button>
   <button onclick="watchAd()">Watch Ad</button>
 </div>
 
+<!-- FLOAT BUTTON -->
 <div class="float">+</div>
 
+<!-- NAV -->
 <div class="nav">
   <div>🏠<br>Home</div>
   <div>🔍<br>Explore</div>
@@ -95,7 +200,6 @@ button{margin:3px}
 </div>
 
 <script>
-
 // ===== DATA =====
 let alf = parseFloat(localStorage.getItem("alf")) || 100;
 let bnb = parseFloat(localStorage.getItem("bnb")) || 0.005;
@@ -104,11 +208,7 @@ let trx = parseFloat(localStorage.getItem("trx")) || 20;
 let staked = parseFloat(localStorage.getItem("staked")) || 0;
 let reward = parseFloat(localStorage.getItem("reward")) || 0;
 
-let prices = {
-  BNB: 600,
-  TRX: 0.06,
-  ALF: 0.1
-};
+let prices = { BNB:600, TRX:0.06, ALF:0.1 };
 
 // SAVE
 function saveData(){
@@ -121,16 +221,16 @@ function saveData(){
 
 // UPDATE UI
 function updateUI(){
-  document.getElementById("alf").innerText = alf;
-  document.getElementById("alfBal").innerText = alf+" ALF";
+  document.getElementById("alf").innerText = alf.toFixed(2);
+  document.getElementById("alfBal").innerText = alf.toFixed(2)+" ALF";
 
   document.getElementById("bnbBal").innerText = bnb.toFixed(5)+" BNB";
-  document.getElementById("trxBal").innerText = trx+" TRX";
+  document.getElementById("trxBal").innerText = trx.toFixed(2)+" TRX";
 
   document.getElementById("bnbPrice").innerText = "$"+prices.BNB.toFixed(2);
   document.getElementById("trxPrice").innerText = "$"+prices.TRX.toFixed(3);
 
-  document.getElementById("staked").innerText = staked;
+  document.getElementById("staked").innerText = staked.toFixed(2);
   document.getElementById("reward").innerText = reward.toFixed(4);
 
   let usd = (alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
@@ -159,30 +259,20 @@ function swap(){
   }
 }
 
-function send(){
-  alert("Coming soon");
-}
-
-function receive(){
-  alert("Wallet: ALF123XYZ");
-}
+function send(){ alert("Coming soon"); }
+function receive(){ alert("Wallet: ALF123XYZ"); }
 
 // ===== WALLET CONNECT =====
 async function connectBNB(){
   if(window.ethereum){
     const acc = await window.ethereum.request({method:'eth_requestAccounts'});
     alert("Connected: "+acc[0]);
-  }else{
-    alert("Install MetaMask");
-  }
+  }else{ alert("Install MetaMask"); }
 }
-
 function connectTRON(){
   if(window.tronWeb){
     alert("Connected: "+window.tronWeb.defaultAddress.base58);
-  }else{
-    alert("Install TronLink");
-  }
+  }else{ alert("Install TronLink"); }
 }
 
 // ===== STAKING =====
@@ -193,37 +283,14 @@ function stake(){
     staked += amount;
     saveData();
     updateUI();
-  }else{
-    alert("Invalid amount");
-  }
+  }else{ alert("Invalid amount"); }
 }
-
-function unstake(){
-  alf += staked;
-  staked = 0;
-  saveData();
-  updateUI();
-}
-
-function claim(){
-  alf += reward;
-  reward = 0;
-  saveData();
-  updateUI();
-}
+function unstake(){ alf += staked; staked=0; saveData(); updateUI(); }
+function claim(){ alf += reward; reward=0; saveData(); updateUI(); }
 
 // ===== REFERRAL =====
-function invite(){
-  alf += 50;
-  saveData();
-  alert("You earned 50 ALF!");
-  updateUI();
-}
-
-// ===== ADS =====
-function watchAd(){
-  alert("Ad watched! Owner earns 💰");
-}
+function invite(){ alf += 50; saveData(); alert("You earned 50 ALF!"); updateUI(); }
+function watchAd(){ alert("Ad watched! Owner earns 💰"); }
 
 // ===== LIVE PRICE =====
 setInterval(()=>{
@@ -234,16 +301,11 @@ setInterval(()=>{
 
 // ===== STAKE REWARD =====
 setInterval(()=>{
-  if(staked > 0){
-    reward += staked * 0.001;
-    saveData();
-    updateUI();
-  }
+  if(staked>0){ reward += staked*0.001; saveData(); updateUI(); }
 },3000);
 
 // INIT
 updateUI();
-
 </script>
 
 </body>
