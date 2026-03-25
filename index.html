@@ -15,6 +15,9 @@ body{
 /* HEADER */
 .header{
   padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 .balance{
@@ -24,10 +27,32 @@ body{
 
 .change{
   color:#00ff88;
-  margin-top:5px;
 }
 
-/* ACTION BUTTONS */
+/* MENU */
+#menu{
+  position:fixed;
+  top:0;
+  right:-260px;
+  width:260px;
+  height:100%;
+  background:#11151c;
+  transition:0.3s;
+  padding:20px;
+  z-index:1000;
+}
+
+.menu-btn{
+  font-size:28px;
+  cursor:pointer;
+}
+
+/* CHART */
+canvas{
+  margin:10px;
+}
+
+/* ACTIONS */
 .actions{
   display:flex;
   justify-content:space-between;
@@ -41,10 +66,10 @@ body{
   text-align:center;
   width:70px;
   cursor:pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:0.2s;
 }
 .card:hover{
-  transform: scale(1.05);
+  transform:scale(1.05);
   box-shadow:0 0 10px #1f6feb;
 }
 
@@ -59,6 +84,7 @@ body{
 .token{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   padding:12px 0;
   border-bottom:1px solid #222;
 }
@@ -67,18 +93,14 @@ body{
 button{
   background:#1f6feb;
   border:none;
-  padding:8px 10px;
+  padding:8px;
   color:white;
   border-radius:6px;
-  cursor:pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-button:hover{
-  transform: scale(1.05);
-  box-shadow:0 0 8px #1f6feb;
+  margin:4px 0;
+  width:100%;
 }
 
-/* FLOAT BUTTON */
+/* FLOAT */
 .float{
   position:fixed;
   bottom:70px;
@@ -92,8 +114,6 @@ button:hover{
   display:flex;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
-  box-shadow:0 4px 15px rgba(0,0,0,0.3);
 }
 
 /* NAV */
@@ -106,34 +126,39 @@ button:hover{
   background:#0c0f14;
   padding:10px 0;
   border-top:1px solid #222;
-  font-size:12px;
-}
-.nav div{
-  text-align:center;
-  cursor:pointer;
-}
-.nav div:hover{
-  color:#1f6feb;
-}
-
-input{
-  padding:5px;
-  width:100px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="balance">$<span id="usd">0</span></div>
-  <div class="change">+2.45% Today</div>
-  <button onclick="connectBNB()">Connect BNB</button>
-  <button onclick="connectTRON()">Connect TRON</button>
+<!-- SIDE MENU -->
+<div id="menu">
+  <h3>Menu</h3>
+
+  <button onclick="connectBNB()">🔗 Connect BNB</button>
+  <button onclick="connectTRON()">🔗 Connect TRON</button>
+
+  <button onclick="goStake()">💰 Staking</button>
+  <button onclick="goReferral()">🎁 Referral</button>
+
+  <button onclick="closeMenu()">❌ Close</button>
 </div>
 
-<!-- ACTION BUTTONS -->
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="balance">$<span id="usd">0</span></div>
+    <div class="change">+2.45%</div>
+  </div>
+
+  <div class="menu-btn" onclick="openMenu()">☰</div>
+</div>
+
+<!-- CHART -->
+<canvas id="chart" height="100"></canvas>
+
+<!-- ACTIONS -->
 <div class="actions">
   <div class="card" onclick="buy()">💰<br><small>Buy</small></div>
   <div class="card" onclick="swap()">🔄<br><small>Swap</small></div>
@@ -143,168 +168,165 @@ input{
 
 <!-- TOKENS -->
 <div class="section">
-  <h3>Assets</h3>
+
   <div class="token">
-    <div>
-      <b>BNB</b><br>
-      <small id="bnbPrice"></small>
+    <div style="display:flex;align-items:center;">
+      <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" width="30">
+      <div style="margin-left:10px;">
+        <b>BNB</b><br>
+        <small id="bnbPrice"></small>
+      </div>
     </div>
     <div id="bnbBal"></div>
   </div>
 
   <div class="token">
-    <div>
-      <b>ALF</b><br>
-      <small>$0.10</small>
+    <div style="display:flex;align-items:center;">
+      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="30">
+      <div style="margin-left:10px;">
+        <b>ALF</b><br>
+        <small>$0.10</small>
+      </div>
     </div>
     <div id="alfBal"></div>
   </div>
 
   <div class="token">
-    <div>
-      <b>TRX</b><br>
-      <small id="trxPrice"></small>
+    <div style="display:flex;align-items:center;">
+      <img src="https://cryptologos.cc/logos/tron-trx-logo.png" width="30">
+      <div style="margin-left:10px;">
+        <b>TRX</b><br>
+        <small id="trxPrice"></small>
+      </div>
     </div>
     <div id="trxBal"></div>
   </div>
+
 </div>
 
-<!-- STAKING -->
-<div class="section">
+<!-- STAKE -->
+<div class="section" id="stakeSection">
   <h3>Stake ALF</h3>
-  <p>Staked: <span id="staked">0</span> ALF</p>
-  <p>Reward: <span id="reward">0</span> ALF</p>
-  <input id="stakeInput" type="number" placeholder="Amount"><br>
+  <p>Staked: <span id="staked">0</span></p>
+  <p>Reward: <span id="reward">0</span></p>
+  <input id="stakeInput" type="number">
   <button onclick="stake()">Stake</button>
   <button onclick="unstake()">Unstake</button>
   <button onclick="claim()">Claim</button>
 </div>
 
-<!-- EARN & REFERRAL -->
-<div class="section">
-  <h3>Earn & Referral</h3>
+<!-- REFERRAL -->
+<div class="section" id="refSection">
+  <h3>Referral</h3>
   <button onclick="invite()">Invite Friend (+50 ALF)</button>
-  <button onclick="watchAd()">Watch Ad</button>
 </div>
 
-<!-- FLOAT BUTTON -->
+<!-- FLOAT -->
 <div class="float">+</div>
 
 <!-- NAV -->
 <div class="nav">
-  <div>🏠<br>Home</div>
-  <div>🔍<br>Explore</div>
-  <div>📊<br>Trade</div>
-  <div>🕒<br>Activity</div>
-  <div>🎁<br>Rewards</div>
+  <div>🏠</div>
+  <div>🔍</div>
+  <div>📊</div>
+  <div>🕒</div>
+  <div>🎁</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-// ===== DATA =====
+// MENU
+function openMenu(){ document.getElementById("menu").style.right="0"; }
+function closeMenu(){ document.getElementById("menu").style.right="-260px"; }
+
+function goStake(){
+  document.getElementById("stakeSection").scrollIntoView({behavior:"smooth"});
+  closeMenu();
+}
+
+function goReferral(){
+  document.getElementById("refSection").scrollIntoView({behavior:"smooth"});
+  closeMenu();
+}
+
+// DATA
 let alf = parseFloat(localStorage.getItem("alf")) || 100;
 let bnb = parseFloat(localStorage.getItem("bnb")) || 0.005;
 let trx = parseFloat(localStorage.getItem("trx")) || 20;
-
 let staked = parseFloat(localStorage.getItem("staked")) || 0;
 let reward = parseFloat(localStorage.getItem("reward")) || 0;
 
-let prices = { BNB:600, TRX:0.06, ALF:0.1 };
+let prices = {BNB:600,TRX:0.06,ALF:0.1};
 
-// SAVE
-function saveData(){
-  localStorage.setItem("alf", alf);
-  localStorage.setItem("bnb", bnb);
-  localStorage.setItem("trx", trx);
-  localStorage.setItem("staked", staked);
-  localStorage.setItem("reward", reward);
-}
+// CHART
+const ctx = document.getElementById('chart').getContext('2d');
+let chart = new Chart(ctx,{
+  type:'line',
+  data:{
+    labels:[1,2,3,4,5,6,7],
+    datasets:[{
+      data:[10,12,11,15,14,18,20],
+      borderColor:"#1f6feb",
+      tension:0.4
+    }]
+  },
+  options:{
+    plugins:{legend:{display:false}},
+    scales:{x:{display:false},y:{display:false}}
+  }
+});
 
 // UPDATE UI
 function updateUI(){
-  document.getElementById("alf").innerText = alf.toFixed(2);
   document.getElementById("alfBal").innerText = alf.toFixed(2)+" ALF";
-
   document.getElementById("bnbBal").innerText = bnb.toFixed(5)+" BNB";
   document.getElementById("trxBal").innerText = trx.toFixed(2)+" TRX";
-
   document.getElementById("bnbPrice").innerText = "$"+prices.BNB.toFixed(2);
   document.getElementById("trxPrice").innerText = "$"+prices.TRX.toFixed(3);
-
-  document.getElementById("staked").innerText = staked.toFixed(2);
+  document.getElementById("staked").innerText = staked;
   document.getElementById("reward").innerText = reward.toFixed(4);
 
   let usd = (alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
   document.getElementById("usd").innerText = usd.toFixed(2);
 }
 
-// ===== ACTIONS =====
-function buy(){
-  let amount = prompt("Enter ALF to buy");
-  if(amount){
-    alf += parseFloat(amount);
-    saveData();
-    updateUI();
-  }
-}
-
-function swap(){
-  let amount = prompt("Swap ALF amount");
-  if(amount && alf >= amount){
-    alf -= amount;
-    bnb += (amount * prices.ALF) / prices.BNB;
-    saveData();
-    updateUI();
-  }else{
-    alert("Not enough ALF");
-  }
-}
-
+// ACTIONS
+function buy(){ alf+=10; updateUI(); }
+function swap(){ if(alf>1){ alf-=1; bnb+=0.0001; updateUI(); } }
 function send(){ alert("Coming soon"); }
 function receive(){ alert("Wallet: ALF123XYZ"); }
 
-// ===== WALLET CONNECT =====
-async function connectBNB(){
-  if(window.ethereum){
-    const acc = await window.ethereum.request({method:'eth_requestAccounts'});
-    alert("Connected: "+acc[0]);
-  }else{ alert("Install MetaMask"); }
-}
-function connectTRON(){
-  if(window.tronWeb){
-    alert("Connected: "+window.tronWeb.defaultAddress.base58);
-  }else{ alert("Install TronLink"); }
-}
+// WALLET
+function connectBNB(){ alert("Connect MetaMask"); }
+function connectTRON(){ alert("Connect TronLink"); }
 
-// ===== STAKING =====
+// STAKE
 function stake(){
   let amount = parseFloat(document.getElementById("stakeInput").value);
-  if(amount && amount <= alf){
-    alf -= amount;
-    staked += amount;
-    saveData();
-    updateUI();
-  }else{ alert("Invalid amount"); }
+  if(amount<=alf){ alf-=amount; staked+=amount; updateUI(); }
 }
-function unstake(){ alf += staked; staked=0; saveData(); updateUI(); }
-function claim(){ alf += reward; reward=0; saveData(); updateUI(); }
+function unstake(){ alf+=staked; staked=0; updateUI(); }
+function claim(){ alf+=reward; reward=0; updateUI(); }
 
-// ===== REFERRAL =====
-function invite(){ alf += 50; saveData(); alert("You earned 50 ALF!"); updateUI(); }
-function watchAd(){ alert("Ad watched! Owner earns 💰"); }
+// REFERRAL
+function invite(){ alf+=50; alert("You earned 50 ALF"); updateUI(); }
 
-// ===== LIVE PRICE =====
+// LIVE
 setInterval(()=>{
   prices.BNB += (Math.random()-0.5)*10;
   prices.TRX += (Math.random()-0.5)*0.01;
+
+  let last = chart.data.datasets[0].data.slice(-1)[0];
+  chart.data.datasets[0].data.push(last+(Math.random()-0.5)*2);
+  chart.data.datasets[0].data.shift();
+  chart.update();
+
+  if(staked>0) reward+=staked*0.001;
+
   updateUI();
-},3000);
+},2000);
 
-// ===== STAKE REWARD =====
-setInterval(()=>{
-  if(staked>0){ reward += staked*0.001; saveData(); updateUI(); }
-},3000);
-
-// INIT
 updateUI();
 </script>
 
