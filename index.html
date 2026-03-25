@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALF Wallet</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f5f5f5}
+
+/* HEADER */
+.header{padding:20px;background:white}
+.balance{font-size:32px;font-weight:bold}
+.change{color:green}
+
+/* ACTIONS */
+.actions{display:flex;justify-content:space-around;margin:15px}
+.card{background:#eee;padding:15px;border-radius:15px;text-align:center;width:70px}
+
+/* TOKENS */
+.section{background:white;padding:10px;margin-top:10px}
+.token{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+
+/* FLOAT */
+.float{
+position:fixed;bottom:70px;left:50%;
+transform:translateX(-50%);
+background:blue;color:white;
+width:60px;height:60px;border-radius:50%;
+font-size:30px;display:flex;align-items:center;justify-content:center;
+}
+
+/* NAV */
+.nav{
+position:fixed;bottom:0;width:100%;
+display:flex;justify-content:space-around;
+background:white;padding:10px 0;border-top:1px solid #ddd;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="balance">$<span id="usd">0</span></div>
+  <div class="change">ALF Balance: <span id="alf">100</span></div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+  <div class="card" onclick="buy()">💰<br>Buy</div>
+  <div class="card" onclick="swap()">🔄<br>Swap</div>
+  <div class="card" onclick="send()">📤<br>Send</div>
+  <div class="card" onclick="receive()">📥<br>Receive</div>
+</div>
+
+<!-- TOKENS -->
+<div class="section">
+  <h3>Tokens</h3>
+
+  <div class="token">
+    <div>BNB<br><small id="bnbPrice"></small></div>
+    <div id="bnbBal"></div>
+  </div>
+
+  <div class="token">
+    <div>ALF Token</div>
+    <div id="alfBal"></div>
+  </div>
+
+  <div class="token">
+    <div>TRX<br><small id="trxPrice"></small></div>
+    <div id="trxBal"></div>
+  </div>
+
+</div>
+
+<!-- FLOAT -->
+<div class="float" onclick="alert('Add Token')">+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div>🏠<br>Home</div>
+  <div>🔍<br>Explore</div>
+  <div>📊<br>Trade</div>
+  <div>🕒<br>Activity</div>
+  <div>🎁<br>Rewards</div>
+</div>
+
+<script>
+// DATA
+let alf=100;
+let bnb=0.005;
+let trx=20;
+
+let prices={
+BNB:600,
+TRX:0.06,
+ALF:0.1
+};
+
+// UPDATE UI
+function updateUI(){
+document.getElementById("alf").innerText=alf;
+document.getElementById("alfBal").innerText=alf+" ALF";
+
+document.getElementById("bnbBal").innerText=bnb.toFixed(5)+" BNB";
+document.getElementById("trxBal").innerText=trx+" TRX";
+
+document.getElementById("bnbPrice").innerText="$"+prices.BNB.toFixed(2);
+document.getElementById("trxPrice").innerText="$"+prices.TRX.toFixed(3);
+
+// USD TOTAL
+let usd=(alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
+document.getElementById("usd").innerText=usd.toFixed(2);
+}
+
+// ACTIONS
+function buy(){
+let amount=prompt("Enter ALF to buy");
+if(amount){
+alf+=parseInt(amount);
+updateUI();
+}
+}
+
+function swap(){
+let amount=prompt("Swap ALF amount");
+if(amount && alf>=amount){
+alf-=amount;
+bnb+=(amount*prices.ALF)/prices.BNB;
+updateUI();
+}
+}
+
+function send(){
+alert("Send feature coming soon");
+}
+
+function receive(){
+alert("Wallet Address: ALF123XYZ");
+}
+
+// LIVE PRICE
+setInterval(()=>{
+prices.BNB+= (Math.random()-0.5)*10;
+prices.TRX+= (Math.random()-0.5)*0.01;
+updateUI();
+},3000);
+
+// INIT
+updateUI();
+</script>
+
+</body>
+</html>
