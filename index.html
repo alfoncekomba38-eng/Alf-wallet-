@@ -53,7 +53,7 @@ body{
   cursor:pointer;
 }
 
-/* DASHBOARD TABS */
+/* TABS */
 .tabs{
   display:flex;
   gap:10px;
@@ -68,6 +68,17 @@ body{
   background:#f7f8fa;
   font-weight:bold;
   cursor:pointer;
+}
+
+/* TOKEN STYLE */
+.token{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:12px;
+  background:#f9f9f9;
+  font-weight:bold;
 }
 
 /* BOTTOM NAV */
@@ -121,13 +132,32 @@ body{
     <h3></h3>
 
     <div class="tabs">
-      <div class="tab">📊 Tokens</div>
+      <div class="tab" onclick="go('tokens')">📊 Tokens</div>
       <div class="tab" onclick="go('mining')">⛏️ Mining</div>
       <div class="tab" onclick="go('staking')">📈 Staking</div>
     </div>
 
   </div>
 
+</div>
+
+<!-- TOKENS PAGE -->
+<div id="tokens" class="section">
+  <div class="card">
+    <h3>💰 Tokens</h3>
+
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+
+      <div class="token"><span>₿ BTC</span><span>0.00</span></div>
+      <div class="token"><span>🟡 BNB</span><span>0.00</span></div>
+      <div class="token"><span>🪙 ALF</span><span>110.04</span></div>
+      <div class="token"><span>💵 USDT</span><span>0.00</span></div>
+      <div class="token"><span>🌐 TRX</span><span>0.00</span></div>
+      <div class="token"><span>🟣 PI</span><span>0.00</span></div>
+      <div class="token"><span>🔷 SOL</span><span>0.00</span></div>
+
+    </div>
+  </div>
 </div>
 
 <!-- MINING -->
@@ -175,16 +205,12 @@ body{
 </div>
 
 <script>
-
 function go(page){
-
   document.querySelectorAll(".section").forEach(s=>{
     s.classList.remove("active");
   });
-
   document.getElementById(page).classList.add("active");
 }
-
 </script>
 
 </body>
