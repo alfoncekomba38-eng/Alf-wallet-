@@ -5,37 +5,43 @@
 <title>ALF Wallet Pro</title>
 
 <style>
+:root{
+  --bg:#ffffff;
+  --text:#111;
+  --card:#f2f4f7;
+  --section:#ffffff;
+  --border:#eee;
+  --primary:#4f6ef7;
+}
+
+.dark{
+  --bg:#0c0f14;
+  --text:#ffffff;
+  --card:#1a1f2b;
+  --section:#11151c;
+  --border:#222;
+  --primary:#1f6feb;
+}
+
 body{
   margin:0;
   font-family:Arial;
-  background:#0c0f14;
-  color:white;
+  background:var(--bg);
+  color:var(--text);
 }
 
 /* HEADER */
-.header{
-  padding:20px;
-}
-
+.header{padding:20px;}
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-.balance{
-  font-size:34px;
-  font-weight:bold;
-}
+.balance{font-size:34px;font-weight:bold;}
+.change{color:#16c784;}
 
-.change{
-  color:#00ff88;
-}
-
-.menu-btn{
-  font-size:28px;
-  cursor:pointer;
-}
+.menu-btn{font-size:26px;cursor:pointer;}
 
 /* MENU */
 #menu{
@@ -44,16 +50,15 @@ body{
   right:-260px;
   width:260px;
   height:100%;
-  background:#11151c;
+  background:var(--section);
+  color:var(--text);
   transition:0.3s;
   padding:20px;
   z-index:1000;
 }
 
 /* CHART */
-canvas{
-  margin-top:10px;
-}
+canvas{margin-top:10px;}
 
 /* ACTIONS */
 .actions{
@@ -63,60 +68,39 @@ canvas{
 }
 
 .card{
-  background:#1a1f2b;
+  background:var(--card);
   padding:12px;
   border-radius:12px;
   text-align:center;
   width:70px;
   cursor:pointer;
-  transition:0.2s;
-}
-.card:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 10px #1f6feb;
 }
 
-/* TOKENS */
+/* SECTION */
 .section{
-  background:#11151c;
+  background:var(--section);
   margin:10px;
   padding:10px;
   border-radius:12px;
 }
 
+/* TOKEN */
 .token{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   padding:12px 0;
-  border-bottom:1px solid #222;
+  border-bottom:1px solid var(--border);
 }
 
-/* BUTTONS */
+/* BUTTON */
 button{
-  background:#1f6feb;
+  background:var(--primary);
+  color:white;
   border:none;
   padding:8px;
-  color:white;
   border-radius:6px;
   margin:4px 0;
   width:100%;
-}
-
-/* FLOAT */
-.float{
-  position:fixed;
-  bottom:70px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#1f6feb;
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  font-size:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
 }
 
 /* NAV */
@@ -126,29 +110,41 @@ button{
   width:100%;
   display:flex;
   justify-content:space-around;
-  background:#0c0f14;
-  padding:10px 0;
-  border-top:1px solid #222;
+  background:var(--bg);
+  border-top:1px solid var(--border);
+}
+
+/* FLOAT */
+.float{
+  position:fixed;
+  bottom:70px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--primary);
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  font-size:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SIDE MENU -->
+<!-- MENU -->
 <div id="menu">
   <h3>Menu</h3>
-
   <button onclick="connectBNB()">🔗 Connect BNB</button>
   <button onclick="connectTRON()">🔗 Connect TRON</button>
-
   <button onclick="goStake()">💰 Staking</button>
   <button onclick="goReferral()">🎁 Referral</button>
-
   <button onclick="closeMenu()">❌ Close</button>
 </div>
 
-<!-- HEADER + CHART -->
+<!-- HEADER -->
 <div class="header">
 
   <div class="topbar">
@@ -156,10 +152,13 @@ button{
       <div class="balance">$<span id="usd">0</span></div>
       <div class="change">+2.45%</div>
     </div>
-    <div class="menu-btn" onclick="openMenu()">☰</div>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="toggleTheme()" style="width:auto;">🌙</button>
+      <div class="menu-btn" onclick="openMenu()">☰</div>
+    </div>
   </div>
 
-  <!-- CHART NDANI YA HEADER -->
   <canvas id="chart" height="60"></canvas>
 
 </div>
@@ -174,40 +173,9 @@ button{
 
 <!-- TOKENS -->
 <div class="section">
-
-  <div class="token">
-    <div style="display:flex;align-items:center;">
-      <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" width="30">
-      <div style="margin-left:10px;">
-        <b>BNB</b><br>
-        <small id="bnbPrice"></small>
-      </div>
-    </div>
-    <div id="bnbBal"></div>
-  </div>
-
-  <div class="token">
-    <div style="display:flex;align-items:center;">
-      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="30">
-      <div style="margin-left:10px;">
-        <b>ALF</b><br>
-        <small>$0.10</small>
-      </div>
-    </div>
-    <div id="alfBal"></div>
-  </div>
-
-  <div class="token">
-    <div style="display:flex;align-items:center;">
-      <img src="https://cryptologos.cc/logos/tron-trx-logo.png" width="30">
-      <div style="margin-left:10px;">
-        <b>TRX</b><br>
-        <small id="trxPrice"></small>
-      </div>
-    </div>
-    <div id="trxBal"></div>
-  </div>
-
+  <div class="token"><div>BNB</div><div id="bnbBal"></div></div>
+  <div class="token"><div>ALF</div><div id="alfBal"></div></div>
+  <div class="token"><div>TRX</div><div id="trxBal"></div></div>
 </div>
 
 <!-- STAKE -->
@@ -227,10 +195,8 @@ button{
   <button onclick="invite()">Invite Friend (+50 ALF)</button>
 </div>
 
-<!-- FLOAT -->
 <div class="float">+</div>
 
-<!-- NAV -->
 <div class="nav">
   <div>🏠</div>
   <div>🔍</div>
@@ -242,67 +208,74 @@ button{
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+// THEME
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme", document.body.classList.contains("dark")?"dark":"light");
+}
+if(localStorage.getItem("theme")==="dark"){
+  document.body.classList.add("dark");
+}
+
 // MENU
-function openMenu(){ document.getElementById("menu").style.right="0"; }
-function closeMenu(){ document.getElementById("menu").style.right="-260px"; }
-
-function goStake(){
-  document.getElementById("stakeSection").scrollIntoView({behavior:"smooth"});
-  closeMenu();
-}
-
-function goReferral(){
-  document.getElementById("refSection").scrollIntoView({behavior:"smooth"});
-  closeMenu();
-}
+function openMenu(){document.getElementById("menu").style.right="0";}
+function closeMenu(){document.getElementById("menu").style.right="-260px";}
+function goStake(){document.getElementById("stakeSection").scrollIntoView({behavior:"smooth"});closeMenu();}
+function goReferral(){document.getElementById("refSection").scrollIntoView({behavior:"smooth"});closeMenu();}
 
 // DATA
-let alf = parseFloat(localStorage.getItem("alf")) || 100;
-let bnb = parseFloat(localStorage.getItem("bnb")) || 0.005;
-let trx = parseFloat(localStorage.getItem("trx")) || 20;
-let staked = parseFloat(localStorage.getItem("staked")) || 0;
-let reward = parseFloat(localStorage.getItem("reward")) || 0;
-
-let prices = {BNB:600,TRX:0.06,ALF:0.1};
+let alf=100,bnb=0.005,trx=20,staked=0,reward=0;
+let prices={BNB:600,TRX:0.06,ALF:0.1};
 
 // CHART
-const ctx = document.getElementById('chart').getContext('2d');
-let chart = new Chart(ctx,{
+const ctx=document.getElementById('chart').getContext('2d');
+let chart=new Chart(ctx,{
   type:'line',
-  data:{
-    labels:[1,2,3,4,5,6,7],
-    datasets:[{
-      data:[10,12,11,15,14,18,20],
-      borderColor:"#1f6feb",
-      tension:0.4
-    }]
+  data:{labels:[1,2,3,4,5,6,7],
+    datasets:[{data:[10,12,11,15,14,18,20],borderColor:"#4f6ef7",tension:0.4}]
   },
-  options:{
-    plugins:{legend:{display:false}},
-    scales:{x:{display:false},y:{display:false}}
-  }
+  options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}
 });
 
-// UPDATE UI
+// UPDATE
 function updateUI(){
-  document.getElementById("alfBal").innerText = alf.toFixed(2)+" ALF";
-  document.getElementById("bnbBal").innerText = bnb.toFixed(5)+" BNB";
-  document.getElementById("trxBal").innerText = trx.toFixed(2)+" TRX";
-  document.getElementById("bnbPrice").innerText = "$"+prices.BNB.toFixed(2);
-  document.getElementById("trxPrice").innerText = "$"+prices.TRX.toFixed(3);
-  document.getElementById("staked").innerText = staked;
-  document.getElementById("reward").innerText = reward.toFixed(4);
+  document.getElementById("alfBal").innerText=alf.toFixed(2)+" ALF";
+  document.getElementById("bnbBal").innerText=bnb.toFixed(5)+" BNB";
+  document.getElementById("trxBal").innerText=trx.toFixed(2)+" TRX";
+  document.getElementById("staked").innerText=staked;
+  document.getElementById("reward").innerText=reward.toFixed(4);
 
-  let usd = (alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
-  document.getElementById("usd").innerText = usd.toFixed(2);
+  let usd=(alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
+  document.getElementById("usd").innerText=usd.toFixed(2);
 }
+
+// ACTIONS
+function buy(){alf+=10;updateUI();}
+function swap(){if(alf>1){alf-=1;bnb+=0.0001;updateUI();}}
+function send(){alert("Coming soon");}
+function receive(){alert("Wallet: ALF123XYZ");}
+
+// WALLET
+function connectBNB(){alert("Connect MetaMask");}
+function connectTRON(){alert("Connect TronLink");}
+
+// STAKE
+function stake(){
+  let amount=parseFloat(document.getElementById("stakeInput").value);
+  if(amount<=alf){alf-=amount;staked+=amount;updateUI();}
+}
+function unstake(){alf+=staked;staked=0;updateUI();}
+function claim(){alf+=reward;reward=0;updateUI();}
+
+// REFERRAL
+function invite(){alf+=50;alert("You earned 50 ALF");updateUI();}
 
 // LIVE
 setInterval(()=>{
-  prices.BNB += (Math.random()-0.5)*10;
-  prices.TRX += (Math.random()-0.5)*0.01;
+  prices.BNB+=(Math.random()-0.5)*10;
+  prices.TRX+=(Math.random()-0.5)*0.01;
 
-  let last = chart.data.datasets[0].data.slice(-1)[0];
+  let last=chart.data.datasets[0].data.slice(-1)[0];
   chart.data.datasets[0].data.push(last+(Math.random()-0.5)*2);
   chart.data.datasets[0].data.shift();
   chart.update();
