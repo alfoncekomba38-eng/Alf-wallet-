@@ -113,8 +113,10 @@ body{
   </div>
 
   <div class="card">
-    <h3>💰 Wallet</h3>
-    <p>Balance: 110.04 ALF</p>
+    <h3>💰 Dashboard</h3>
+    <p>📊 Tokens</p>
+    <p>⛏️ Mining</p>
+    <p>📈 Staking</p>
   </div>
 
 </div>
@@ -143,17 +145,27 @@ body{
   </div>
 </div>
 
-<!-- REFERRAL -->
-<div id="referral" class="section">
+<!-- MINING PAGE -->
+<div id="mining" class="section">
+
   <div class="card">
-    <h3>🎁 Referral</h3>
-    <p>Invite friends and earn rewards</p>
+    <h3>⛏️ Mining System</h3>
+
+    <p>Status: <b id="miningStatus">Not mining</b></p>
+    <p>Earned: <b id="minedAmount">0.0000 ALF</b></p>
+
+    <div class="quickGrid">
+      <div class="quickBox" onclick="startMining()">▶ Start</div>
+      <div class="quickBox" onclick="stopMining()">⛔ Stop</div>
+    </div>
+
   </div>
-</div>
 
 </div>
 
-<!-- BOTTOM NAV (5 ITEMS) -->
+</div>
+
+<!-- BOTTOM NAV (NOW 5 ITEMS) -->
 <div class="bottomNav">
 
   <div class="navItem active" onclick="showTab('home',this)">🏠<br><span>Home</span></div>
@@ -164,7 +176,7 @@ body{
 
   <div class="navItem" onclick="showTab('activity',this)">📊<br><span>Activity</span></div>
 
-  <div class="navItem" onclick="showTab('referral',this)">🎁<br><span>Referral</span></div>
+  <div class="navItem" onclick="showTab('mining',this)">⛏️<br><span>Mining</span></div>
 
 </div>
 
@@ -174,6 +186,7 @@ function openMenu(){
   alert("Menu opened");
 }
 
+/* NAV SYSTEM */
 function showTab(tab, el){
 
   document.querySelectorAll(".section").forEach(s=>{
@@ -187,6 +200,27 @@ function showTab(tab, el){
   });
 
   el.classList.add("active");
+}
+
+/* MINING SYSTEM */
+let mining = false;
+let minedAmount = 0;
+let miningInterval;
+
+function startMining(){
+  mining = true;
+  document.getElementById("miningStatus").innerText = "Mining...";
+
+  miningInterval = setInterval(()=>{
+    minedAmount += 0.0005;
+    document.getElementById("minedAmount").innerText = minedAmount.toFixed(4) + " ALF";
+  },1000);
+}
+
+function stopMining(){
+  mining = false;
+  document.getElementById("miningStatus").innerText = "Stopped";
+  clearInterval(miningInterval);
 }
 
 </script>
