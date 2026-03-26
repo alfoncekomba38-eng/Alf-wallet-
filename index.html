@@ -4,370 +4,163 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Wallet Pro</title>
 
+<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+
 <style>
-:root{
-  --bg:#ffffff;
-  --text:#111;
-  --card:#f2f4f7;
-  --section:#ffffff;
-  --border:#eee;
-  --primary:#4f6ef7;
-}
-
-.dark{
-  --bg:#0c0f14;
-  --text:#ffffff;
-  --card:#1a1f2b;
-  --section:#11151c;
-  --border:#222;
-  --primary:#1f6feb;
-}
-
 body{
   margin:0;
   font-family:Arial;
-  background:var(--bg);
-  color:var(--text);
-}
-
-/* HEADER */
-.header{padding:20px;}
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.balance{font-size:34px;font-weight:bold;}
-.change{color:#16c784;}
-
-/* HAMBURGER */
-.menu-btn{
-  width:25px;
-  cursor:pointer;
-}
-.bar{
-  height:3px;
-  background:var(--text);
-  margin:4px 0;
-  border-radius:2px;
-}
-
-/* MENU POPUP */
-#menu{
-  position:fixed;
-  top:70px;
-  right:10px;
-  width:220px;
-  background:var(--section);
-  color:var(--text);
-  padding:10px;
-  border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
-
-  opacity:0;
-  transform:scale(0.9);
-  pointer-events:none;
-  transition:all 0.25s ease;
-
-  z-index:1000;
-}
-
-#menu.show{
-  opacity:1;
-  transform:scale(1);
-  pointer-events:auto;
-}
-
-.menu-item{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-.menu-item:hover{
-  background:var(--card);
-}
-
-/* CHART */
-canvas{margin-top:10px;}
-
-/* ACTIONS */
-.actions{
-  display:flex;
-  justify-content:space-between;
-  margin:15px;
+  background:#0b0f1a;
+  color:white;
 }
 
 .card{
-  background:var(--card);
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-  width:70px;
-}
-
-/* SECTION */
-.section{
-  background:var(--section);
+  background:#151c2c;
   margin:10px;
-  padding:10px;
+  padding:15px;
   border-radius:12px;
 }
 
-/* TOKEN */
-.token{
-  display:flex;
-  justify-content:space-between;
-  padding:12px 0;
-  border-bottom:1px solid var(--border);
-}
-
-/* BUTTON */
 button{
-  background:var(--primary);
-  color:white;
+  width:100%;
+  padding:12px;
   border:none;
-  padding:8px;
-  border-radius:6px;
-  margin:4px 0;
+  border-radius:10px;
+  background:#4f6ef7;
+  color:white;
+  margin-top:8px;
+}
+
+.big{font-size:26px;color:#16c784;font-weight:bold;}
+input{
   width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:8px;
+  border:none;
 }
-
-/* NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  justify-content:space-around;
-  background:var(--bg);
-  border-top:1px solid var(--border);
-}
-
-/* BIGGER ICONS */
-.nav div{
-  font-size:32px;
-  padding:10px 0;
-}
-
-/* FLOAT */
-.float{
-  position:fixed;
-  bottom:70px;
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--primary);
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  font-size:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+.small{font-size:12px;color:#aaa;}
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
-<div id="menu">
-  <div class="menu-item" onclick="showChart()">📊 Chart</div>
-  <div class="menu-item" onclick="goStake()">💰 Staking</div>
-  <div class="menu-item" onclick="goReferral()">🎁 Referral</div>
-  <div class="menu-item" onclick="connectBNB()">🔗 Connect BNB</div>
-  <div class="menu-item" onclick="connectTRON()">🔗 Connect TRON</div>
-  <div class="menu-item" onclick="closeMenu()">❌ Close</div>
+<div class="card">
+  <h2>ALF Wallet 🚀 Mining + Staking</h2>
+  <button onclick="connectWallet()">Connect Wallet</button>
+  <p class="small" id="addr">Not connected</p>
 </div>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="topbar">
-    <div>
-      <div class="balance">$<span id="usd">0</span></div>
-      <div class="change">+2.45%</div>
-    </div>
-
-    <div style="display:flex;gap:10px;align-items:center;">
-      <button onclick="toggleTheme()" style="width:auto;">🌙</button>
-
-      <div class="menu-btn" onclick="openMenu()">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CHART (HIDDEN) -->
-  <canvas id="chart" height="60" style="display:none;"></canvas>
+<!-- BALANCES -->
+<div class="card">
+  <h3>💰 ALF Balance</h3>
+  <div class="big" id="alf">0</div>
 </div>
 
-<!-- ACTIONS -->
-<div class="actions">
-  <div class="card" onclick="buy()">💰<br><small>Buy</small></div>
-  <div class="card" onclick="swap()">🔄<br><small>Swap</small></div>
-  <div class="card" onclick="send()">📤<br><small>Send</small></div>
-  <div class="card" onclick="receive()">📥<br><small>Receive</small></div>
+<!-- MINING -->
+<div class="card">
+  <h3>⛏️ Mining System</h3>
+  <div>Rate: <b>0.5 ALF / hour</b></div>
+  <div class="small">Click start to mine every hour</div>
+  <button onclick="startMining()">Start Mining</button>
+  <button onclick="claimMining()">Claim Rewards</button>
+  <div class="small" id="mineStatus">Not mining</div>
 </div>
 
-<!-- TOKENS -->
-<div class="section">
-  <div class="token"><div>BNB</div><div id="bnbBal"></div></div>
-  <div class="token"><div>ALF</div><div id="alfBal"></div></div>
-  <div class="token"><div>TRX</div><div id="trxBal"></div></div>
+<!-- STAKING -->
+<div class="card">
+  <h3>📈 Staking System</h3>
+  <input id="stakeAmt" placeholder="Amount to stake">
+  <button onclick="stake()">Stake ALF</button>
+  <button onclick="unstake()">Unstake + Rewards</button>
+  <div class="small" id="stakeInfo">No active stake</div>
 </div>
-
-<!-- STAKE -->
-<div class="section" id="stakeSection" style="display:none;">
-  <h3>Stake ALF</h3>
-  <p>Staked: <span id="staked">0</span></p>
-  <p>Reward: <span id="reward">0</span></p>
-  <input id="stakeInput" type="number">
-  <button onclick="stake()">Stake</button>
-  <button onclick="unstake()">Unstake</button>
-  <button onclick="claim()">Claim</button>
-</div>
-
-<!-- REFERRAL -->
-<div class="section" id="refSection" style="display:none;">
-  <h3>Referral</h3>
-  <button onclick="invite()">Invite Friend (+50 ALF)</button>
-</div>
-
-<div class="float">+</div>
-
-<div class="nav">
-  <div>🏠</div>
-  <div>🔍</div>
-  <div onclick="showChart()">📊</div>
-  <div>🕒</div>
-  <div>🎁</div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// THEME
-function toggleTheme(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("theme", document.body.classList.contains("dark")?"dark":"light");
-}
-if(localStorage.getItem("theme")==="dark"){
-  document.body.classList.add("dark");
-}
 
-// MENU
-function openMenu(){
-  document.getElementById("menu").classList.add("show");
-}
-function closeMenu(){
-  document.getElementById("menu").classList.remove("show");
-}
+let user;
 
-// CLOSE WHEN CLICK OUTSIDE
-document.addEventListener("click", function(e){
-  let menu = document.getElementById("menu");
-  let btn = document.querySelector(".menu-btn");
+// fake balances (frontend simulation)
+let alfBalance = 0;
+let miningReward = 0;
+let staked = 0;
+let stakeStart = 0;
+let miningActive = false;
 
-  if(!menu.contains(e.target) && !btn.contains(e.target)){
-    closeMenu();
-  }
-});
+// CONNECT
+async function connectWallet(){
+  if(!window.ethereum) return alert("Install MetaMask");
 
-// SHOW FEATURES
-function showChart(){
-  document.getElementById("chart").style.display="block";
-  closeMenu();
-}
-function goStake(){
-  let s=document.getElementById("stakeSection");
-  s.style.display="block";
-  s.scrollIntoView({behavior:"smooth"});
-  closeMenu();
-}
-function goReferral(){
-  let r=document.getElementById("refSection");
-  r.style.display="block";
-  r.scrollIntoView({behavior:"smooth"});
-  closeMenu();
+  let acc = await ethereum.request({method:"eth_requestAccounts"});
+  user = acc[0];
+
+  document.getElementById("addr").innerText = user;
+
+  loadData();
 }
 
-// DATA
-let alf=0, bnb=0, trx=0, staked=0, reward=0;
-let prices={BNB:600,TRX:0.06,ALF:0.1};
-
-// CHART
-const ctx=document.getElementById('chart').getContext('2d');
-let chart=new Chart(ctx,{
-  type:'line',
-  data:{
-    labels:[1,2,3,4,5,6,7],
-    datasets:[{
-      data:[10,12,11,15,14,18,20],
-      borderColor:"#4f6ef7",
-      tension:0.4
-    }]
-  },
-  options:{
-    plugins:{legend:{display:false}},
-    scales:{x:{display:false},y:{display:false}}
-  }
-});
-
-// UPDATE
-function updateUI(){
-  document.getElementById("alfBal").innerText=alf.toFixed(2)+" ALF";
-  document.getElementById("bnbBal").innerText=bnb.toFixed(5)+" BNB";
-  document.getElementById("trxBal").innerText=trx.toFixed(2)+" TRX";
-  document.getElementById("staked").innerText=staked;
-  document.getElementById("reward").innerText=reward.toFixed(4);
-
-  let usd=(alf*prices.ALF)+(bnb*prices.BNB)+(trx*prices.TRX);
-  document.getElementById("usd").innerText=usd.toFixed(2);
+// LOAD
+function loadData(){
+  document.getElementById("alf").innerText = alfBalance.toFixed(2);
 }
 
-// ACTIONS
-function buy(){alf+=10;updateUI();}
-function swap(){if(alf>1){alf-=1;bnb+=0.0001;updateUI();}}
-function send(){alert("Coming soon");}
-function receive(){alert("Wallet: ALF123XYZ");}
+// ⛏️ MINING
+function startMining(){
+  miningActive = true;
+  document.getElementById("mineStatus").innerText = "Mining started... ⛏️";
 
-// WALLET
-function connectBNB(){alert("Connect MetaMask");}
-function connectTRON(){alert("Connect TronLink");}
+  setInterval(()=>{
+    if(miningActive){
+      miningReward += 0.5; // per hour simulation
+      document.getElementById("mineStatus").innerText =
+      "Mining... Reward: " + miningReward.toFixed(2) + " ALF";
+    }
+  }, 3600000); // 1 hour real-time
+}
 
-// STAKE
+// CLAIM MINING
+function claimMining(){
+  alfBalance += miningReward;
+  miningReward = 0;
+  loadData();
+  alert("Mining claimed!");
+}
+
+// 📈 STAKE
 function stake(){
-  let amount=parseFloat(document.getElementById("stakeInput").value);
-  if(amount<=alf){alf-=amount;staked+=amount;updateUI();}
+  let amt = Number(document.getElementById("stakeAmt").value);
+
+  if(amt <= 0 || amt > alfBalance){
+    return alert("Invalid amount");
+  }
+
+  alfBalance -= amt;
+  staked += amt;
+  stakeStart = Date.now();
+
+  document.getElementById("stakeInfo").innerText =
+  "Staked: " + staked + " ALF";
+  loadData();
 }
-function unstake(){alf+=staked;staked=0;updateUI();}
-function claim(){alf+=reward;reward=0;updateUI();}
 
-// REFERRAL
-function invite(){alf+=50;alert("You earned 50 ALF");updateUI();}
+// UNSTAKE + REWARD
+function unstake(){
+  if(staked <= 0) return alert("No stake");
 
-// LIVE
-setInterval(()=>{
-  prices.BNB+=(Math.random()-0.5)*10;
-  prices.TRX+=(Math.random()-0.5)*0.01;
+  let days = (Date.now() - stakeStart) / (1000*60*60*24);
 
-  let last=chart.data.datasets[0].data.slice(-1)[0];
-  chart.data.datasets[0].data.push(last+(Math.random()-0.5)*2);
-  chart.data.datasets[0].data.shift();
-  chart.update();
+  let reward = staked * 0.05 * days; // 5% daily APR
 
-  if(staked>0) reward+=staked*0.001;
+  alfBalance += staked + reward;
 
-  updateUI();
-},2000);
+  alert("Unstaked + Reward: " + reward.toFixed(2) + " ALF");
 
-updateUI();
+  staked = 0;
+  document.getElementById("stakeInfo").innerText = "No active stake";
+
+  loadData();
+}
+
 </script>
 
 </body>
