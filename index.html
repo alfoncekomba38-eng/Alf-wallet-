@@ -19,23 +19,17 @@ body{
   align-items:center;
   padding:15px;
   border-bottom:1px solid #eee;
-  position:sticky;
-  top:0;
-}
-
-.balanceTop{
-  font-size:16px;
-  font-weight:bold;
 }
 
 .menu{
   font-size:26px;
+  cursor:pointer;
 }
 
 /* CONTAINER */
 .container{padding:15px;}
 
-/* QUICK BOXES */
+/* QUICK ACTIONS */
 .quickGrid{
   display:grid;
   grid-template-columns:repeat(2, 1fr);
@@ -53,22 +47,45 @@ body{
   cursor:pointer;
 }
 
+/* TOKEN LIST */
+.token{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#ffffff;
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  border:1px solid #eee;
+}
+
+.tokenName{
+  font-weight:bold;
+}
+
+.tokenPrice{
+  font-size:12px;
+  color:#666;
+}
+
+.badge{
+  background:#4f6ef7;
+  color:#fff;
+  padding:5px 10px;
+  border-radius:8px;
+  font-size:12px;
+}
+
 /* CARDS */
 .card{
   background:#ffffff;
   padding:15px;
   border-radius:14px;
-  margin-bottom:12px;
+  margin-top:15px;
   box-shadow:0 2px 10px rgba(0,0,0,0.08);
   border:1px solid #eee;
 }
-
-.balance{
-  font-size:28px;
-  font-weight:bold;
-}
-
-.small{font-size:12px;color:#555;}
 
 button{
   width:100%;
@@ -79,11 +96,6 @@ button{
   background:#4f6ef7;
   color:#fff;
 }
-
-.row{
-  display:flex;
-  justify-content:space-between;
-}
 </style>
 </head>
 
@@ -91,13 +103,13 @@ button{
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="balanceTop" id="topBalance">$0</div>
+  <div><b>Wallet</b></div>
   <div class="menu" onclick="openMenu()">☰</div>
 </div>
 
 <div class="container">
 
-<!-- QUICK ACTION BOXES -->
+<!-- QUICK ACTIONS -->
 <div class="quickGrid">
   <div class="quickBox" onclick="buy()">🟢 Buy</div>
   <div class="quickBox" onclick="swap()">🔁 Swap</div>
@@ -105,107 +117,77 @@ button{
   <div class="quickBox" onclick="receive()">📥 Receive</div>
 </div>
 
-<!-- BALANCE -->
-<div class="card">
-  <h3>💰 ALF Balance</h3>
-  <div class="balance" id="balance">110.04 ALF</div>
+<!-- TOKEN LIST -->
+<div class="token">
+  <div>
+    <div class="tokenName">BTC</div>
+    <div class="tokenPrice">Bitcoin</div>
+  </div>
+  <div class="badge">0.00</div>
 </div>
 
-<!-- MINING -->
-<div class="card">
-  <h3>⛏️ Mining</h3>
-  <div>Status: <span id="status">Not mining</span></div>
-  <button onclick="startMining()">Start</button>
-  <button onclick="claim()">Claim</button>
+<div class="token">
+  <div>
+    <div class="tokenName">BNB</div>
+    <div class="tokenPrice">BNB Smart Chain</div>
+  </div>
+  <div class="badge">0.00</div>
 </div>
 
-<!-- STAKING -->
-<div class="card">
-  <h3>📈 Staking</h3>
-  <div class="row"><div>Staked</div><div id="staked">0</div></div>
-  <div class="row"><div>Reward</div><div id="reward">0</div></div>
-  <button onclick="stake()">Stake</button>
+<div class="token">
+  <div>
+    <div class="tokenName">ALF</div>
+    <div class="tokenPrice">ALF Token</div>
+  </div>
+  <div class="badge">110.04</div>
 </div>
 
-<!-- REFERRAL -->
-<div class="card">
-  <h3>🎁 Referral</h3>
-  <div>Code: ALF-72167</div>
-  <button onclick="invite()">Invite (+50)</button>
+<div class="token">
+  <div>
+    <div class="tokenName">USDT</div>
+    <div class="tokenPrice">Tether</div>
+  </div>
+  <div class="badge">0.00</div>
+</div>
+
+<div class="token">
+  <div>
+    <div class="tokenName">TRON</div>
+    <div class="tokenPrice">TRX Network</div>
+  </div>
+  <div class="badge">0.00</div>
+</div>
+
+<div class="token">
+  <div>
+    <div class="tokenName">PI</div>
+    <div class="tokenPrice">Pi Network</div>
+  </div>
+  <div class="badge">0.00</div>
+</div>
+
+<div class="token">
+  <div>
+    <div class="tokenName">SOLANA</div>
+    <div class="tokenPrice">Solana Network</div>
+  </div>
+  <div class="badge">0.00</div>
 </div>
 
 </div>
 
 <script>
 
-let balance = 110.04;
-let staked = 0;
-let reward = 0;
-
-/* UPDATE UI */
-function update(){
-  document.getElementById("balance").innerText = balance.toFixed(2)+" ALF";
-  document.getElementById("staked").innerText = staked;
-  document.getElementById("reward").innerText = reward.toFixed(4);
-  document.getElementById("topBalance").innerText = "$" + (balance * 0.01).toFixed(2);
-}
-
 /* QUICK ACTIONS */
-function buy(){
-  alert("Buy feature coming soon");
-}
-
-function swap(){
-  alert("Swap feature coming soon");
-}
-
-function send(){
-  alert("Send feature coming soon");
-}
-
-function receive(){
-  alert("Your ALF address will be shown here soon");
-}
-
-/* MINING */
-function startMining(){
-  document.getElementById("status").innerText = "Mining...";
-}
-
-function claim(){
-  balance += 0.5;
-  update();
-  alert("0.5 ALF added");
-}
-
-/* STAKE */
-function stake(){
-  if(balance >= 10){
-    balance -= 10;
-    staked += 10;
-    update();
-  }
-}
-
-/* REFERRAL */
-function invite(){
-  balance += 50;
-  update();
-}
+function buy(){ alert("Buy coming soon"); }
+function swap(){ alert("Swap coming soon"); }
+function send(){ alert("Send coming soon"); }
+function receive(){ alert("Receive coming soon"); }
 
 /* MENU */
 function openMenu(){
-  alert("Menu coming soon (settings, profile, logout)");
+  alert("Menu (settings, profile, logout coming soon)");
 }
-
-setInterval(()=>{
-  if(staked > 0){
-    reward += staked * 0.00005;
-    update();
-  }
-},1000);
-
-update();
 
 </script>
 
