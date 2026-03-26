@@ -21,7 +21,7 @@ body{
   padding:15px;
   border-bottom:1px solid #eee;
 }
-.menu{font-size:24px;}
+.menu{font-size:24px;cursor:pointer;}
 
 /* CONTAINER */
 .container{padding:15px;}
@@ -86,6 +86,18 @@ body{
   font-weight:bold;
 }
 
+/* BUTTON */
+button{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  background:#4f6ef7;
+  color:#fff;
+  cursor:pointer;
+}
+
 /* BOTTOM NAV */
 .bottomNav{
   position:fixed;
@@ -120,15 +132,12 @@ body{
 <body>
 
 <!-- TOP -->
-<<div class="topbar">
-
+<div class="topbar">
   <div>
-    <div style="font-size:22px; font-weight:bold;">$0.00</div>
-    <div style="font-size:12px; color:#888;">Total Balance</div>
+    <div style="font-size:22px;font-weight:bold;">$0.00</div>
+    <div style="font-size:12px;color:#888;">Total Balance</div>
   </div>
-
   <div class="menu">☰</div>
-
 </div>
 
 <div class="container">
@@ -187,6 +196,19 @@ body{
   </div>
 </div>
 
+<!-- REFERRAL -->
+<div id="referral" class="section">
+  <div class="card">
+    <h3>🎁 Referral</h3>
+
+    <p>Your Code: <b id="refCode">ALF-72167</b></p>
+
+    <button onclick="copyLink()">📋 Copy Link</button>
+
+    <button onclick="invite()">Invite Friend (+50 ALF)</button>
+  </div>
+</div>
+
 <!-- EXPLORE -->
 <div id="explore" class="section">
   <div class="card"><h3>🔍 Explore</h3></div>
@@ -206,34 +228,4 @@ body{
 
 <!-- BOTTOM NAV -->
 <div class="bottomNav">
-  <div class="navItem active" onclick="goNav('home', this)">🏠<br>Home</div>
-  <div class="navItem" onclick="goNav('explore', this)">🔍<br>Explore</div>
-  <div class="navItem" onclick="goNav('trade', this)">💱<br>Trade</div>
-  <div class="navItem" onclick="goNav('activity', this)">📊<br>Activity</div>
-  <div class="navItem" onclick="goNav('mining', this)">⛏️<br>Mining</div>
-</div>
-
-<script>
-
-/* NAV */
-function goNav(page, el){
-  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  document.getElementById(page).classList.add("active");
-
-  document.querySelectorAll(".navItem").forEach(i=>i.classList.remove("active"));
-  el.classList.add("active");
-}
-
-/* TABS */
-function goTab(page, el){
-  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  document.getElementById(page).classList.add("active");
-
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  el.classList.add("active");
-}
-
-</script>
-
-</body>
-</html>
+  <div class="navItem active" onclick="goNav('home', this)">🏠<
