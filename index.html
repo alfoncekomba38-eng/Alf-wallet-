@@ -2,164 +2,275 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Wallet Pro</title>
-
-<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+<title>ALF Wallet Pro MAX</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
-  background:#0b0f1a;
-  color:white;
+  background:#0f1115;
+  color:#fff;
 }
 
+.container{padding:15px;}
+
 .card{
-  background:#151c2c;
-  margin:10px;
+  background:#1a1f2b;
   padding:15px;
   border-radius:12px;
+  margin-bottom:12px;
 }
 
 button{
   width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#4f6ef7;
-  color:white;
+  padding:10px;
   margin-top:8px;
+  border:none;
+  border-radius:8px;
+  background:#4f6ef7;
+  color:#fff;
+  font-weight:bold;
 }
 
-.big{font-size:26px;color:#16c784;font-weight:bold;}
 input{
   width:100%;
   padding:10px;
-  margin-top:6px;
+  margin-top:8px;
   border-radius:8px;
   border:none;
 }
+
 .small{font-size:12px;color:#aaa;}
+
+.row{display:flex;justify-content:space-between;margin:6px 0;}
+
+.green{color:#0ad1a8;}
+
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>ALF Wallet 🚀 Mining + Staking</h2>
-  <button onclick="connectWallet()">Connect Wallet</button>
-  <p class="small" id="addr">Not connected</p>
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+  <h3>🔐 ALF Login</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" placeholder="Password" type="password">
+  <button onclick="login()">Login / Signup</button>
 </div>
 
-<!-- BALANCES -->
+<!-- WALLET -->
+<div class="card">
+  <h3>Wallet</h3>
+  <div class="small green" id="user">Not logged in</div>
+</div>
+
+<!-- BALANCE -->
 <div class="card">
   <h3>💰 ALF Balance</h3>
-  <div class="big" id="alf">0</div>
+  <h2><span id="balance">0.00</span> ALF</h2>
+  <div class="small">Referral Bonus Included</div>
+</div>
+
+<!-- PRICES -->
+<div class="card">
+  <h3>📈 Live Prices</h3>
+  <div class="row"><div>BNB</div><div id="bnb">loading...</div></div>
+  <div class="row"><div>TRX</div><div id="trx">loading...</div></div>
+  <div class="row"><div>BTC</div><div id="btc">loading...</div></div>
 </div>
 
 <!-- MINING -->
 <div class="card">
-  <h3>⛏️ Mining System</h3>
-  <div>Rate: <b>0.5 ALF / hour</b></div>
-  <div class="small">Click start to mine every hour</div>
+  <h3>⛏️ 24H Mining</h3>
+  <div class="small">Reward: 0.5 ALF / 24H</div>
+
+  <div class="small">Status: <span id="mineStatus">Not mining</span></div>
+  <div class="small">Time Left: <span id="timer">24:00:00</span></div>
+
   <button onclick="startMining()">Start Mining</button>
-  <button onclick="claimMining()">Claim Rewards</button>
-  <div class="small" id="mineStatus">Not mining</div>
+  <button onclick="claimMining()">Claim Mining</button>
 </div>
 
 <!-- STAKING -->
 <div class="card">
-  <h3>📈 Staking System</h3>
-  <input id="stakeAmt" placeholder="Amount to stake">
-  <button onclick="stake()">Stake ALF</button>
-  <button onclick="unstake()">Unstake + Rewards</button>
-  <div class="small" id="stakeInfo">No active stake</div>
+  <h3>📈 Staking</h3>
+
+  <div class="row"><div>Staked</div><div id="staked">0</div></div>
+  <div class="row"><div>Reward</div><div id="reward">0</div></div>
+
+  <input id="stakeInput" placeholder="Enter ALF">
+  <button onclick="stake()">Stake</button>
+  <button onclick="unstake()">Unstake</button>
+  <button onclick="claimStake()">Claim</button>
+</div>
+
+<!-- REFERRAL -->
+<div class="card">
+  <h3>🎁 Referral System</h3>
+  <div class="small">Your Code:</div>
+  <div class="green" id="refCode"></div>
+  <button onclick="invite()">Invite Friend (+50 ALF)</button>
+</div>
+
 </div>
 
 <script>
 
-let user;
+// ================= FIREBASE (READY STRUCTURE) =================
+// 👉 Add your Firebase config here
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID"
+};
 
-// fake balances (frontend simulation)
-let alfBalance = 0;
-let miningReward = 0;
+// NOTE: actual Firebase SDK not loaded (template ready)
+
+// ================= USER SYSTEM =================
+let user = localStorage.getItem("user") || "";
+document.getElementById("user").innerText = user ? user : "Not logged in";
+
+function login(){
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("password").value;
+
+  if(email && pass){
+    user = email;
+    localStorage.setItem("user", user);
+    document.getElementById("user").innerText = user;
+    document.getElementById("loginBox").style.display="none";
+
+    generateReferral();
+  }
+}
+
+// ================= BALANCE =================
+let balance = parseFloat(localStorage.getItem("balance")) || 10;
 let staked = 0;
-let stakeStart = 0;
-let miningActive = false;
+let stakeReward = 0;
 
-// CONNECT
-async function connectWallet(){
-  if(!window.ethereum) return alert("Install MetaMask");
+// ================= REFERRAL =================
+let refCode = localStorage.getItem("ref") || "";
 
-  let acc = await ethereum.request({method:"eth_requestAccounts"});
-  user = acc[0];
-
-  document.getElementById("addr").innerText = user;
-
-  loadData();
+function generateReferral(){
+  if(!refCode){
+    refCode = "ALF-" + Math.floor(Math.random()*99999);
+    localStorage.setItem("ref", refCode);
+  }
+  document.getElementById("refCode").innerText = refCode;
 }
 
-// LOAD
-function loadData(){
-  document.getElementById("alf").innerText = alfBalance.toFixed(2);
+generateReferral();
+
+function invite(){
+  balance += 50;
+  save();
+  alert("Friend invited +50 ALF");
+  update();
 }
 
-// ⛏️ MINING
+// ================= MINING 24H =================
+let mining = false;
+let timeLeft = parseInt(localStorage.getItem("mineTime")) || 86400;
+
 function startMining(){
-  miningActive = true;
-  document.getElementById("mineStatus").innerText = "Mining started... ⛏️";
-
-  setInterval(()=>{
-    if(miningActive){
-      miningReward += 0.5; // per hour simulation
-      document.getElementById("mineStatus").innerText =
-      "Mining... Reward: " + miningReward.toFixed(2) + " ALF";
-    }
-  }, 3600000); // 1 hour real-time
+  mining = true;
+  document.getElementById("mineStatus").innerText = "Mining active ⛏️";
 }
 
-// CLAIM MINING
 function claimMining(){
-  alfBalance += miningReward;
-  miningReward = 0;
-  loadData();
-  alert("Mining claimed!");
+  if(timeLeft <= 0){
+    balance += 0.5;
+    timeLeft = 86400;
+    save();
+    update();
+    alert("Claimed 0.5 ALF");
+  } else {
+    alert("Wait 24H to finish mining");
+  }
 }
 
-// 📈 STAKE
+// ================= STAKING =================
 function stake(){
-  let amt = Number(document.getElementById("stakeAmt").value);
+  let amt = parseFloat(document.getElementById("stakeInput").value);
 
-  if(amt <= 0 || amt > alfBalance){
-    return alert("Invalid amount");
+  if(amt > 0 && amt <= balance){
+    balance -= amt;
+    staked += amt;
+    save();
+    update();
+  }
+}
+
+function unstake(){
+  balance += staked;
+  staked = 0;
+  save();
+  update();
+}
+
+function claimStake(){
+  balance += stakeReward;
+  stakeReward = 0;
+  save();
+  update();
+}
+
+// ================= LIVE CRYPTO API =================
+async function loadPrices(){
+  try{
+    let res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,binancecoin,tron&vs_currencies=usd");
+    let data = await res.json();
+
+    document.getElementById("btc").innerText = "$"+data.bitcoin.usd;
+    document.getElementById("bnb").innerText = "$"+data.binancecoin.usd;
+    document.getElementById("trx").innerText = "$"+data.tron.usd;
+  }catch(e){
+    console.log("API error");
+  }
+}
+loadPrices();
+
+// ================= SAVE =================
+function save(){
+  localStorage.setItem("balance", balance);
+  localStorage.setItem("mineTime", timeLeft);
+}
+
+// ================= UPDATE =================
+function update(){
+  document.getElementById("balance").innerText = balance.toFixed(2);
+  document.getElementById("staked").innerText = staked.toFixed(2);
+  document.getElementById("reward").innerText = stakeReward.toFixed(4);
+  document.getElementById("timer").innerText = formatTime(timeLeft);
+}
+
+function formatTime(sec){
+  let h = Math.floor(sec/3600);
+  let m = Math.floor((sec%3600)/60);
+  let s = sec%60;
+  return `${h}:${m}:${s}`;
+}
+
+// ================= LOOP =================
+setInterval(()=>{
+
+  if(mining && timeLeft > 0){
+    timeLeft--;
   }
 
-  alfBalance -= amt;
-  staked += amt;
-  stakeStart = Date.now();
+  if(staked > 0){
+    stakeReward += staked * 0.00005;
+  }
 
-  document.getElementById("stakeInfo").innerText =
-  "Staked: " + staked + " ALF";
-  loadData();
-}
+  update();
 
-// UNSTAKE + REWARD
-function unstake(){
-  if(staked <= 0) return alert("No stake");
+},1000);
 
-  let days = (Date.now() - stakeStart) / (1000*60*60*24);
-
-  let reward = staked * 0.05 * days; // 5% daily APR
-
-  alfBalance += staked + reward;
-
-  alert("Unstaked + Reward: " + reward.toFixed(2) + " ALF");
-
-  staked = 0;
-  document.getElementById("stakeInfo").innerText = "No active stake";
-
-  loadData();
-}
+update();
 
 </script>
 
