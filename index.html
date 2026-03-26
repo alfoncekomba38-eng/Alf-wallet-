@@ -13,6 +13,7 @@ body{
   padding-bottom:70px;
 }
 
+/* TOP */
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -20,14 +21,12 @@ body{
   padding:15px;
   border-bottom:1px solid #eee;
 }
+.menu{font-size:24px;}
 
-.menu{font-size:26px; cursor:pointer;}
-
+/* CONTAINER */
 .container{padding:15px;}
 
-.section{display:none;}
-.section.active{display:block;}
-
+/* CARD */
 .card{
   background:#fff;
   padding:15px;
@@ -37,10 +36,12 @@ body{
   border:1px solid #eee;
 }
 
+/* QUICK GRID */
 .quickGrid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
+  margin-top:10px;
 }
 
 .quickBox{
@@ -52,6 +53,24 @@ body{
   cursor:pointer;
 }
 
+/* DASHBOARD TABS */
+.tabs{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.tab{
+  flex:1;
+  text-align:center;
+  padding:12px;
+  border-radius:10px;
+  background:#f7f8fa;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* BOTTOM NAV */
 .bottomNav{
   position:fixed;
   bottom:0;
@@ -65,24 +84,25 @@ body{
 }
 
 .navItem{
-  text-align:center;
   font-size:12px;
+  text-align:center;
   color:#777;
   cursor:pointer;
 }
 
-.navItem.active{
-  color:#4f6ef7;
-  font-weight:bold;
-}
+.navItem.active{color:#4f6ef7;font-weight:bold;}
+
+.section{display:none;}
+.section.active{display:block;}
 </style>
 </head>
 
 <body>
 
+<!-- TOP -->
 <div class="topbar">
-  <div><b>ALF Wallet</b></div>
-  <div class="menu" onclick="openMenu()">☰</div>
+  <b>ALF Wallet</b>
+  <div class="menu">☰</div>
 </div>
 
 <div class="container">
@@ -99,11 +119,31 @@ body{
 
   <div class="card">
     <h3>📊 Dashboard</h3>
-    <p>📊 Tokens</p>
-    <p>⛏️ Mining</p>
-    <p>📈 Staking</p>
+
+    <div class="tabs">
+      <div class="tab">📊 Tokens</div>
+      <div class="tab" onclick="go('mining')">⛏️ Mining</div>
+      <div class="tab" onclick="go('staking')">📈 Staking</div>
+    </div>
+
   </div>
 
+</div>
+
+<!-- MINING -->
+<div id="mining" class="section">
+  <div class="card">
+    <h3>⛏️ Mining</h3>
+    <p>Status: Not mining</p>
+  </div>
+</div>
+
+<!-- STAKING -->
+<div id="staking" class="section">
+  <div class="card">
+    <h3>📈 Staking</h3>
+    <p>Stake ALF and earn rewards</p>
+  </div>
 </div>
 
 <!-- EXPLORE -->
@@ -121,103 +161,28 @@ body{
   <div class="card"><h3>📊 Activity</h3></div>
 </div>
 
-<!-- MINING -->
-<div id="mining" class="section">
-  <div class="card">
-    <h3>⛏️ Mining</h3>
-
-    <p>Status: <b id="miningStatus">Not mining</b></p>
-    <p>Earned: <b id="minedAmount">0.0000 ALF</b></p>
-
-    <div class="quickGrid">
-      <div class="quickBox" onclick="startMining()">▶ Start</div>
-      <div class="quickBox" onclick="stopMining()">⛔ Stop</div>
-    </div>
-  </div>
-</div>
-
-<!-- STAKING -->
-<div id="staking" class="section">
-  <div class="card">
-    <h3>📈 Staking</h3>
-
-    <p>Stake your ALF tokens and earn rewards.</p>
-
-    <div class="quickBox" onclick="stake()">💰 Stake Now</div>
-
-    <p id="staked">Staked: 0 ALF</p>
-    <p id="reward">Reward: 0 ALF</p>
-  </div>
-</div>
-
 </div>
 
 <!-- BOTTOM NAV -->
 <div class="bottomNav">
 
-  <div class="navItem active" onclick="showTab('home',this)">🏠<br>Home</div>
-  <div class="navItem" onclick="showTab('explore',this)">🔍<br>Explore</div>
-  <div class="navItem" onclick="showTab('trade',this)">💱<br>Trade</div>
-  <div class="navItem" onclick="showTab('activity',this)">📊<br>Activity</div>
-  <div class="navItem" onclick="showTab('mining',this)">⛏️<br>Mining</div>
+  <div class="navItem active" onclick="go('home')">🏠<br>Home</div>
+  <div class="navItem" onclick="go('explore')">🔍<br>Explore</div>
+  <div class="navItem" onclick="go('trade')">💱<br>Trade</div>
+  <div class="navItem" onclick="go('activity')">📊<br>Activity</div>
+  <div class="navItem" onclick="go('mining')">⛏️<br>Mining</div>
 
 </div>
 
 <script>
 
-function openMenu(){
-  alert("Menu opened");
-}
-
-/* NAV */
-function showTab(tab,el){
+function go(page){
 
   document.querySelectorAll(".section").forEach(s=>{
     s.classList.remove("active");
   });
 
-  document.getElementById(tab).classList.add("active");
-
-  document.querySelectorAll(".navItem").forEach(i=>{
-    i.classList.remove("active");
-  });
-
-  el.classList.add("active");
-}
-
-/* MINING */
-let mining=false;
-let minedAmount=0;
-let miningInterval;
-
-function startMining(){
-  mining=true;
-  document.getElementById("miningStatus").innerText="Mining...";
-
-  miningInterval=setInterval(()=>{
-    minedAmount+=0.0005;
-    document.getElementById("minedAmount").innerText=minedAmount.toFixed(4)+" ALF";
-  },1000);
-}
-
-function stopMining(){
-  mining=false;
-  document.getElementById("miningStatus").innerText="Stopped";
-  clearInterval(miningInterval);
-}
-
-/* STAKING */
-let staked=0;
-let reward=0;
-
-function stake(){
-  staked+=10;
-  document.getElementById("staked").innerText="Staked: "+staked+" ALF";
-
-  setInterval(()=>{
-    reward+=staked*0.0001;
-    document.getElementById("reward").innerText="Reward: "+reward.toFixed(4)+" ALF";
-  },1000);
+  document.getElementById(page).classList.add("active");
 }
 
 </script>
