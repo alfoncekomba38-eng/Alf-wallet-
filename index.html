@@ -2,9 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Wallet REAL</title>
-
-<script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+<title>ALF Wallet</title>
 
 <style>
 body{
@@ -13,13 +11,27 @@ body{
   background:#0f1115;
   color:#fff;
 }
+
 .container{padding:15px;}
+
 .card{
   background:#1a1f2b;
   padding:15px;
   border-radius:12px;
   margin-bottom:12px;
 }
+
+h3{margin:5px 0;}
+
+.balance{
+  font-size:28px;
+  font-weight:bold;
+}
+
+.small{font-size:12px;color:#aaa;}
+
+.green{color:#0ad1a8;}
+
 button{
   width:100%;
   padding:10px;
@@ -29,16 +41,12 @@ button{
   background:#4f6ef7;
   color:#fff;
 }
-input{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border-radius:8px;
-  border:none;
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:6px;
 }
-.small{font-size:12px;color:#aaa;}
-.row{display:flex;justify-content:space-between;}
-.green{color:#0ad1a8;}
 </style>
 </head>
 
@@ -49,135 +57,101 @@ input{
 <!-- WALLET -->
 <div class="card">
   <h3>🔗 Wallet</h3>
-  <div id="address">Not connected</div>
-  <div class="small">Balance: <span id="realBalance">0</span> BNB</div>
-  <button onclick="connectWallet()">Connect MetaMask</button>
+  <div id="email">paskalimhaiki2@gmail.com</div>
+  <div class="small green">Connected</div>
 </div>
 
-<!-- SEND -->
-<div class="card">
-  <h3>💸 Send BNB</h3>
-  <input id="to" placeholder="Receiver address">
-  <input id="amount" placeholder="Amount (BNB)">
-  <button onclick="sendBNB()">Send</button>
-</div>
-
-<!-- ALF SYSTEM -->
+<!-- BALANCE -->
 <div class="card">
   <h3>💰 ALF Balance</h3>
-  <h2 id="alf">100</h2>
+  <div class="balance" id="balance">110.04 ALF</div>
+  <div class="small">Referral Bonus Included</div>
 </div>
 
+<!-- MINING -->
 <div class="card">
-  <h3>⛏️ Mining (24H)</h3>
-  <div class="small">Reward: 0.5 ALF</div>
-  <div id="mineStatus">Not mining</div>
-  <button onclick="startMining()">Start</button>
-  <button onclick="claimMining()">Claim</button>
+  <h3>⛏️ 24H Mining</h3>
+  <div class="small">Reward: 0.5 ALF / 24H</div>
+
+  <div class="small">Status: <span id="status">Mining active ⛏️</span></div>
+  <div class="small">Time Left: <span id="timer">23:52:14</span></div>
+
+  <button onclick="startMining()">Start Mining</button>
+  <button onclick="claim()">Claim Mining</button>
 </div>
 
+<!-- STAKING -->
 <div class="card">
   <h3>📈 Staking</h3>
-  <div class="row"><div>Staked</div><div id="staked">0</div></div>
-  <div class="row"><div>Reward</div><div id="reward">0</div></div>
-  <input id="stakeAmt" placeholder="Amount">
+
+  <div class="row"><div>Staked</div><div id="staked">0.00</div></div>
+  <div class="row"><div>Reward</div><div id="reward">0.0000</div></div>
+
   <button onclick="stake()">Stake</button>
-  <button onclick="claimStake()">Claim</button>
+</div>
+
+<!-- REFERRAL -->
+<div class="card">
+  <h3>🎁 Referral</h3>
+  <div class="small">Your Code:</div>
+  <div class="green">ALF-72167</div>
+
+  <button onclick="invite()">Invite Friend (+50 ALF)</button>
 </div>
 
 </div>
 
 <script>
-// ================= WEB3 =================
-let web3;
-let account;
-
-async function connectWallet(){
-  if(window.ethereum){
-    web3 = new Web3(window.ethereum);
-    let acc = await window.ethereum.request({method:'eth_requestAccounts'});
-    account = acc[0];
-
-    document.getElementById("address").innerText = account;
-    loadBalance();
-  } else {
-    alert("Install MetaMask");
-  }
-}
-
-async function loadBalance(){
-  let bal = await web3.eth.getBalance(account);
-  let bnb = web3.utils.fromWei(bal,'ether');
-  document.getElementById("realBalance").innerText = parseFloat(bnb).toFixed(4);
-}
-
-// ================= SEND =================
-async function sendBNB(){
-  let to = document.getElementById("to").value;
-  let amt = document.getElementById("amount").value;
-
-  let value = web3.utils.toWei(amt,'ether');
-
-  await window.ethereum.request({
-    method:'eth_sendTransaction',
-    params:[{
-      from: account,
-      to: to,
-      value: web3.utils.toHex(value)
-    }]
-  });
-
-  alert("Transaction sent");
-}
-
-// ================= ALF SYSTEM =================
-let alf = 100;
+// DATA
+let balance = 110.04;
 let staked = 0;
 let reward = 0;
-let lastMine = 0;
-
-function update(){
-  document.getElementById("alf").innerText = alf.toFixed(2);
-  document.getElementById("staked").innerText = staked;
-  document.getElementById("reward").innerText = reward.toFixed(4);
-}
 
 // MINING
 function startMining(){
-  document.getElementById("mineStatus").innerText = "Mining...";
+  document.getElementById("status").innerText = "Mining active ⛏️";
 }
 
-function claimMining(){
-  let now = Date.now();
-
-  if(now - lastMine >= 86400000){
-    alf += 0.5;
-    lastMine = now;
-    update();
-    alert("0.5 ALF earned");
-  } else {
-    alert("Wait 24H");
-  }
+function claim(){
+  balance += 0.5;
+  update();
+  alert("0.5 ALF claimed");
 }
 
 // STAKE
 function stake(){
-  let amt = parseFloat(document.getElementById("stakeAmt").value);
+  let amt = 10;
 
-  if(amt > 0 && amt <= alf){
-    alf -= amt;
+  if(balance >= amt){
+    balance -= amt;
     staked += amt;
     update();
   }
 }
 
-function claimStake(){
-  alf += reward;
-  reward = 0;
+// REFERRAL
+function invite(){
+  balance += 50;
   update();
 }
 
-// LOOP
+// AUTO REWARD
 setInterval(()=>{
   if(staked > 0){
-    reward += staked
+    reward += staked * 0.00005;
+  }
+
+  document.getElementById("reward").innerText = reward.toFixed(4);
+},1000);
+
+// UPDATE
+function update(){
+  document.getElementById("balance").innerText = balance.toFixed(2)+" ALF";
+  document.getElementById("staked").innerText = staked.toFixed(2);
+}
+
+update();
+</script>
+
+</body>
+</html>
