@@ -10,6 +10,7 @@ body{
   font-family:Arial;
   background:#ffffff;
   color:#111;
+  padding-bottom:70px;
 }
 
 /* TOP BAR */
@@ -26,8 +27,21 @@ body{
   cursor:pointer;
 }
 
-/* CONTAINER */
+/* SECTIONS */
 .container{padding:15px;}
+
+.section{display:none;}
+.section.active{display:block;}
+
+/* CARD */
+.card{
+  background:#ffffff;
+  padding:15px;
+  border-radius:14px;
+  margin-top:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  border:1px solid #eee;
+}
 
 /* QUICK ACTIONS */
 .quickGrid{
@@ -47,54 +61,33 @@ body{
   cursor:pointer;
 }
 
-/* TOKEN LIST */
-.token{
+/* BOTTOM NAV */
+.bottomNav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
   display:flex;
-  justify-content:space-between;
-  align-items:center;
+  justify-content:space-around;
   background:#ffffff;
-  padding:14px;
-  margin-bottom:10px;
-  border-radius:12px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.06);
-  border:1px solid #eee;
+  border-top:1px solid #eee;
+  padding:8px 0;
 }
 
-.tokenName{
+.navItem{
+  text-align:center;
+  font-size:12px;
+  color:#777;
+  cursor:pointer;
+}
+
+.navItem span{
+  font-size:11px;
+}
+
+.navItem.active{
+  color:#4f6ef7;
   font-weight:bold;
-}
-
-.tokenPrice{
-  font-size:12px;
-  color:#666;
-}
-
-.badge{
-  background:#4f6ef7;
-  color:#fff;
-  padding:5px 10px;
-  border-radius:8px;
-  font-size:12px;
-}
-
-/* CARDS */
-.card{
-  background:#ffffff;
-  padding:15px;
-  border-radius:14px;
-  margin-top:15px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.08);
-  border:1px solid #eee;
-}
-
-button{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border:none;
-  border-radius:8px;
-  background:#4f6ef7;
-  color:#fff;
 }
 </style>
 </head>
@@ -103,90 +96,97 @@ button{
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div><b>Wallet</b></div>
+  <div><b>ALF Wallet</b></div>
   <div class="menu" onclick="openMenu()">☰</div>
 </div>
 
 <div class="container">
 
-<!-- QUICK ACTIONS -->
-<div class="quickGrid">
-  <div class="quickBox" onclick="buy()">🟢 Buy</div>
-  <div class="quickBox" onclick="swap()">🔁 Swap</div>
-  <div class="quickBox" onclick="send()">📤 Send</div>
-  <div class="quickBox" onclick="receive()">📥 Receive</div>
+<!-- HOME -->
+<div id="home" class="section active">
+
+  <div class="quickGrid">
+    <div class="quickBox">🟢 Buy</div>
+    <div class="quickBox">🔁 Swap</div>
+    <div class="quickBox">📤 Send</div>
+    <div class="quickBox">📥 Receive</div>
+  </div>
+
+  <div class="card">
+    <h3>💰 Wallet</h3>
+    <p>Balance: 110.04 ALF</p>
+  </div>
+
 </div>
 
-<!-- TOKEN LIST -->
-<div class="token">
-  <div>
-    <div class="tokenName">BTC</div>
-    <div class="tokenPrice">Bitcoin</div>
+<!-- EXPLORE -->
+<div id="explore" class="section">
+  <div class="card">
+    <h3>🔍 Explore</h3>
+    <p>Markets & crypto news</p>
   </div>
-  <div class="badge">0.00</div>
 </div>
 
-<div class="token">
-  <div>
-    <div class="tokenName">BNB</div>
-    <div class="tokenPrice">BNB Smart Chain</div>
+<!-- TRADE -->
+<div id="trade" class="section">
+  <div class="card">
+    <h3>💱 Trade</h3>
+    <p>Swap tokens hapa</p>
   </div>
-  <div class="badge">0.00</div>
 </div>
 
-<div class="token">
-  <div>
-    <div class="tokenName">ALF</div>
-    <div class="tokenPrice">ALF Token</div>
+<!-- ACTIVITY -->
+<div id="activity" class="section">
+  <div class="card">
+    <h3>📊 Activity</h3>
+    <p>Transaction history</p>
   </div>
-  <div class="badge">110.04</div>
 </div>
 
-<div class="token">
-  <div>
-    <div class="tokenName">USDT</div>
-    <div class="tokenPrice">Tether</div>
+<!-- REFERRAL -->
+<div id="referral" class="section">
+  <div class="card">
+    <h3>🎁 Referral</h3>
+    <p>Invite friends and earn rewards</p>
   </div>
-  <div class="badge">0.00</div>
 </div>
 
-<div class="token">
-  <div>
-    <div class="tokenName">TRON</div>
-    <div class="tokenPrice">TRX Network</div>
-  </div>
-  <div class="badge">0.00</div>
 </div>
 
-<div class="token">
-  <div>
-    <div class="tokenName">PI</div>
-    <div class="tokenPrice">Pi Network</div>
-  </div>
-  <div class="badge">0.00</div>
-</div>
+<!-- BOTTOM NAV (5 ITEMS) -->
+<div class="bottomNav">
 
-<div class="token">
-  <div>
-    <div class="tokenName">SOLANA</div>
-    <div class="tokenPrice">Solana Network</div>
-  </div>
-  <div class="badge">0.00</div>
-</div>
+  <div class="navItem active" onclick="showTab('home',this)">🏠<br><span>Home</span></div>
+
+  <div class="navItem" onclick="showTab('explore',this)">🔍<br><span>Explore</span></div>
+
+  <div class="navItem" onclick="showTab('trade',this)">💱<br><span>Trade</span></div>
+
+  <div class="navItem" onclick="showTab('activity',this)">📊<br><span>Activity</span></div>
+
+  <div class="navItem" onclick="showTab('referral',this)">🎁<br><span>Referral</span></div>
 
 </div>
 
 <script>
 
-/* QUICK ACTIONS */
-function buy(){ alert("Buy coming soon"); }
-function swap(){ alert("Swap coming soon"); }
-function send(){ alert("Send coming soon"); }
-function receive(){ alert("Receive coming soon"); }
-
-/* MENU */
 function openMenu(){
-  alert("Menu (settings, profile, logout coming soon)");
+  alert("Menu opened");
+}
+
+function showTab(tab, el){
+
+  document.querySelectorAll(".section").forEach(s=>{
+    s.classList.remove("active");
+  });
+
+  document.getElementById(tab).classList.add("active");
+
+  document.querySelectorAll(".navItem").forEach(i=>{
+    i.classList.remove("active");
+  });
+
+  el.classList.add("active");
 }
 
 </script>
