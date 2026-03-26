@@ -8,8 +8,8 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#0f1115;
-  color:#fff;
+  background:#ffffff;
+  color:#111;
 }
 
 /* TOP BAR */
@@ -18,7 +18,7 @@ body{
   justify-content:space-between;
   align-items:center;
   padding:15px;
-  background:#0f1115;
+  border-bottom:1px solid #eee;
   position:sticky;
   top:0;
 }
@@ -26,36 +26,49 @@ body{
 .balanceTop{
   font-size:16px;
   font-weight:bold;
-  color:#fff;
 }
 
 .menu{
   font-size:26px;
-  cursor:pointer;
-  color:#fff;
 }
 
 /* CONTAINER */
 .container{padding:15px;}
 
-/* WHITE CARDS */
+/* QUICK BOXES */
+.quickGrid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.quickBox{
+  background:#f7f8fa;
+  padding:18px;
+  text-align:center;
+  border-radius:12px;
+  font-weight:bold;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  cursor:pointer;
+}
+
+/* CARDS */
 .card{
   background:#ffffff;
-  color:#111;
   padding:15px;
   border-radius:14px;
   margin-bottom:12px;
   box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  border:1px solid #eee;
 }
 
 .balance{
   font-size:28px;
   font-weight:bold;
-  color:#111;
 }
 
 .small{font-size:12px;color:#555;}
-.green{color:#0ad1a8;}
 
 button{
   width:100%;
@@ -70,7 +83,6 @@ button{
 .row{
   display:flex;
   justify-content:space-between;
-  color:#111;
 }
 </style>
 </head>
@@ -85,17 +97,21 @@ button{
 
 <div class="container">
 
-<div class="card">
-  <h3>🔗 Wallet</h3>
-  <div>paskalimhaiki2@gmail.com</div>
-  <div class="small">Connected</div>
+<!-- QUICK ACTION BOXES -->
+<div class="quickGrid">
+  <div class="quickBox" onclick="buy()">🟢 Buy</div>
+  <div class="quickBox" onclick="swap()">🔁 Swap</div>
+  <div class="quickBox" onclick="send()">📤 Send</div>
+  <div class="quickBox" onclick="receive()">📥 Receive</div>
 </div>
 
+<!-- BALANCE -->
 <div class="card">
   <h3>💰 ALF Balance</h3>
   <div class="balance" id="balance">110.04 ALF</div>
 </div>
 
+<!-- MINING -->
 <div class="card">
   <h3>⛏️ Mining</h3>
   <div>Status: <span id="status">Not mining</span></div>
@@ -103,6 +119,7 @@ button{
   <button onclick="claim()">Claim</button>
 </div>
 
+<!-- STAKING -->
 <div class="card">
   <h3>📈 Staking</h3>
   <div class="row"><div>Staked</div><div id="staked">0</div></div>
@@ -110,6 +127,7 @@ button{
   <button onclick="stake()">Stake</button>
 </div>
 
+<!-- REFERRAL -->
 <div class="card">
   <h3>🎁 Referral</h3>
   <div>Code: ALF-72167</div>
@@ -119,6 +137,7 @@ button{
 </div>
 
 <script>
+
 let balance = 110.04;
 let staked = 0;
 let reward = 0;
@@ -128,9 +147,24 @@ function update(){
   document.getElementById("balance").innerText = balance.toFixed(2)+" ALF";
   document.getElementById("staked").innerText = staked;
   document.getElementById("reward").innerText = reward.toFixed(4);
-
-  // TOP BALANCE
   document.getElementById("topBalance").innerText = "$" + (balance * 0.01).toFixed(2);
+}
+
+/* QUICK ACTIONS */
+function buy(){
+  alert("Buy feature coming soon");
+}
+
+function swap(){
+  alert("Swap feature coming soon");
+}
+
+function send(){
+  alert("Send feature coming soon");
+}
+
+function receive(){
+  alert("Your ALF address will be shown here soon");
 }
 
 /* MINING */
@@ -161,10 +195,9 @@ function invite(){
 
 /* MENU */
 function openMenu(){
-  alert("Menu opened (settings / profile / logout hapa baadaye)");
+  alert("Menu coming soon (settings, profile, logout)");
 }
 
-/* REWARDS LOOP */
 setInterval(()=>{
   if(staked > 0){
     reward += staked * 0.00005;
@@ -173,6 +206,7 @@ setInterval(()=>{
 },1000);
 
 update();
+
 </script>
 
 </body>
