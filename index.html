@@ -2,7 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Wallet Pro MAX</title>
+<title>ALF Wallet REAL</title>
+
+<script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
 
 <style>
 body{
@@ -11,16 +13,13 @@ body{
   background:#0f1115;
   color:#fff;
 }
-
 .container{padding:15px;}
-
 .card{
   background:#1a1f2b;
   padding:15px;
   border-radius:12px;
   margin-bottom:12px;
 }
-
 button{
   width:100%;
   padding:10px;
@@ -29,9 +28,7 @@ button{
   border-radius:8px;
   background:#4f6ef7;
   color:#fff;
-  font-weight:bold;
 }
-
 input{
   width:100%;
   padding:10px;
@@ -39,13 +36,9 @@ input{
   border-radius:8px;
   border:none;
 }
-
 .small{font-size:12px;color:#aaa;}
-
-.row{display:flex;justify-content:space-between;margin:6px 0;}
-
+.row{display:flex;justify-content:space-between;}
 .green{color:#0ad1a8;}
-
 </style>
 </head>
 
@@ -53,226 +46,138 @@ input{
 
 <div class="container">
 
-<!-- LOGIN -->
-<div class="card" id="loginBox">
-  <h3>🔐 ALF Login</h3>
-  <input id="email" placeholder="Email">
-  <input id="password" placeholder="Password" type="password">
-  <button onclick="login()">Login / Signup</button>
-</div>
-
 <!-- WALLET -->
 <div class="card">
-  <h3>Wallet</h3>
-  <div class="small green" id="user">Not logged in</div>
+  <h3>🔗 Wallet</h3>
+  <div id="address">Not connected</div>
+  <div class="small">Balance: <span id="realBalance">0</span> BNB</div>
+  <button onclick="connectWallet()">Connect MetaMask</button>
 </div>
 
-<!-- BALANCE -->
+<!-- SEND -->
+<div class="card">
+  <h3>💸 Send BNB</h3>
+  <input id="to" placeholder="Receiver address">
+  <input id="amount" placeholder="Amount (BNB)">
+  <button onclick="sendBNB()">Send</button>
+</div>
+
+<!-- ALF SYSTEM -->
 <div class="card">
   <h3>💰 ALF Balance</h3>
-  <h2><span id="balance">0.00</span> ALF</h2>
-  <div class="small">Referral Bonus Included</div>
+  <h2 id="alf">100</h2>
 </div>
 
-<!-- PRICES -->
 <div class="card">
-  <h3>📈 Live Prices</h3>
-  <div class="row"><div>BNB</div><div id="bnb">loading...</div></div>
-  <div class="row"><div>TRX</div><div id="trx">loading...</div></div>
-  <div class="row"><div>BTC</div><div id="btc">loading...</div></div>
+  <h3>⛏️ Mining (24H)</h3>
+  <div class="small">Reward: 0.5 ALF</div>
+  <div id="mineStatus">Not mining</div>
+  <button onclick="startMining()">Start</button>
+  <button onclick="claimMining()">Claim</button>
 </div>
 
-<!-- MINING -->
-<div class="card">
-  <h3>⛏️ 24H Mining</h3>
-  <div class="small">Reward: 0.5 ALF / 24H</div>
-
-  <div class="small">Status: <span id="mineStatus">Not mining</span></div>
-  <div class="small">Time Left: <span id="timer">24:00:00</span></div>
-
-  <button onclick="startMining()">Start Mining</button>
-  <button onclick="claimMining()">Claim Mining</button>
-</div>
-
-<!-- STAKING -->
 <div class="card">
   <h3>📈 Staking</h3>
-
   <div class="row"><div>Staked</div><div id="staked">0</div></div>
   <div class="row"><div>Reward</div><div id="reward">0</div></div>
-
-  <input id="stakeInput" placeholder="Enter ALF">
+  <input id="stakeAmt" placeholder="Amount">
   <button onclick="stake()">Stake</button>
-  <button onclick="unstake()">Unstake</button>
   <button onclick="claimStake()">Claim</button>
-</div>
-
-<!-- REFERRAL -->
-<div class="card">
-  <h3>🎁 Referral System</h3>
-  <div class="small">Your Code:</div>
-  <div class="green" id="refCode"></div>
-  <button onclick="invite()">Invite Friend (+50 ALF)</button>
 </div>
 
 </div>
 
 <script>
+// ================= WEB3 =================
+let web3;
+let account;
 
-// ================= FIREBASE (READY STRUCTURE) =================
-// 👉 Add your Firebase config here
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID"
-};
+async function connectWallet(){
+  if(window.ethereum){
+    web3 = new Web3(window.ethereum);
+    let acc = await window.ethereum.request({method:'eth_requestAccounts'});
+    account = acc[0];
 
-// NOTE: actual Firebase SDK not loaded (template ready)
-
-// ================= USER SYSTEM =================
-let user = localStorage.getItem("user") || "";
-document.getElementById("user").innerText = user ? user : "Not logged in";
-
-function login(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("password").value;
-
-  if(email && pass){
-    user = email;
-    localStorage.setItem("user", user);
-    document.getElementById("user").innerText = user;
-    document.getElementById("loginBox").style.display="none";
-
-    generateReferral();
+    document.getElementById("address").innerText = account;
+    loadBalance();
+  } else {
+    alert("Install MetaMask");
   }
 }
 
-// ================= BALANCE =================
-let balance = parseFloat(localStorage.getItem("balance")) || 10;
+async function loadBalance(){
+  let bal = await web3.eth.getBalance(account);
+  let bnb = web3.utils.fromWei(bal,'ether');
+  document.getElementById("realBalance").innerText = parseFloat(bnb).toFixed(4);
+}
+
+// ================= SEND =================
+async function sendBNB(){
+  let to = document.getElementById("to").value;
+  let amt = document.getElementById("amount").value;
+
+  let value = web3.utils.toWei(amt,'ether');
+
+  await window.ethereum.request({
+    method:'eth_sendTransaction',
+    params:[{
+      from: account,
+      to: to,
+      value: web3.utils.toHex(value)
+    }]
+  });
+
+  alert("Transaction sent");
+}
+
+// ================= ALF SYSTEM =================
+let alf = 100;
 let staked = 0;
-let stakeReward = 0;
+let reward = 0;
+let lastMine = 0;
 
-// ================= REFERRAL =================
-let refCode = localStorage.getItem("ref") || "";
-
-function generateReferral(){
-  if(!refCode){
-    refCode = "ALF-" + Math.floor(Math.random()*99999);
-    localStorage.setItem("ref", refCode);
-  }
-  document.getElementById("refCode").innerText = refCode;
+function update(){
+  document.getElementById("alf").innerText = alf.toFixed(2);
+  document.getElementById("staked").innerText = staked;
+  document.getElementById("reward").innerText = reward.toFixed(4);
 }
 
-generateReferral();
-
-function invite(){
-  balance += 50;
-  save();
-  alert("Friend invited +50 ALF");
-  update();
-}
-
-// ================= MINING 24H =================
-let mining = false;
-let timeLeft = parseInt(localStorage.getItem("mineTime")) || 86400;
-
+// MINING
 function startMining(){
-  mining = true;
-  document.getElementById("mineStatus").innerText = "Mining active ⛏️";
+  document.getElementById("mineStatus").innerText = "Mining...";
 }
 
 function claimMining(){
-  if(timeLeft <= 0){
-    balance += 0.5;
-    timeLeft = 86400;
-    save();
+  let now = Date.now();
+
+  if(now - lastMine >= 86400000){
+    alf += 0.5;
+    lastMine = now;
     update();
-    alert("Claimed 0.5 ALF");
+    alert("0.5 ALF earned");
   } else {
-    alert("Wait 24H to finish mining");
+    alert("Wait 24H");
   }
 }
 
-// ================= STAKING =================
+// STAKE
 function stake(){
-  let amt = parseFloat(document.getElementById("stakeInput").value);
+  let amt = parseFloat(document.getElementById("stakeAmt").value);
 
-  if(amt > 0 && amt <= balance){
-    balance -= amt;
+  if(amt > 0 && amt <= alf){
+    alf -= amt;
     staked += amt;
-    save();
     update();
   }
-}
-
-function unstake(){
-  balance += staked;
-  staked = 0;
-  save();
-  update();
 }
 
 function claimStake(){
-  balance += stakeReward;
-  stakeReward = 0;
-  save();
+  alf += reward;
+  reward = 0;
   update();
 }
 
-// ================= LIVE CRYPTO API =================
-async function loadPrices(){
-  try{
-    let res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,binancecoin,tron&vs_currencies=usd");
-    let data = await res.json();
-
-    document.getElementById("btc").innerText = "$"+data.bitcoin.usd;
-    document.getElementById("bnb").innerText = "$"+data.binancecoin.usd;
-    document.getElementById("trx").innerText = "$"+data.tron.usd;
-  }catch(e){
-    console.log("API error");
-  }
-}
-loadPrices();
-
-// ================= SAVE =================
-function save(){
-  localStorage.setItem("balance", balance);
-  localStorage.setItem("mineTime", timeLeft);
-}
-
-// ================= UPDATE =================
-function update(){
-  document.getElementById("balance").innerText = balance.toFixed(2);
-  document.getElementById("staked").innerText = staked.toFixed(2);
-  document.getElementById("reward").innerText = stakeReward.toFixed(4);
-  document.getElementById("timer").innerText = formatTime(timeLeft);
-}
-
-function formatTime(sec){
-  let h = Math.floor(sec/3600);
-  let m = Math.floor((sec%3600)/60);
-  let s = sec%60;
-  return `${h}:${m}:${s}`;
-}
-
-// ================= LOOP =================
+// LOOP
 setInterval(()=>{
-
-  if(mining && timeLeft > 0){
-    timeLeft--;
-  }
-
   if(staked > 0){
-    stakeReward += staked * 0.00005;
-  }
-
-  update();
-
-},1000);
-
-update();
-
-</script>
-
-</body>
-</html>
+    reward += staked
