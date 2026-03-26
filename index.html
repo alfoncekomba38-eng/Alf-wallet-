@@ -70,7 +70,12 @@ body{
   cursor:pointer;
 }
 
-/* TOKEN STYLE */
+.tab.active{
+  background:#4f6ef7;
+  color:#fff;
+}
+
+/* TOKEN */
 .token{
   display:flex;
   justify-content:space-between;
@@ -101,8 +106,12 @@ body{
   cursor:pointer;
 }
 
-.navItem.active{color:#4f6ef7;font-weight:bold;}
+.navItem.active{
+  color:#4f6ef7;
+  font-weight:bold;
+}
 
+/* SECTIONS */
 .section{display:none;}
 .section.active{display:block;}
 </style>
@@ -129,25 +138,21 @@ body{
   </div>
 
   <div class="card">
-    <h3></h3>
-
     <div class="tabs">
-      <div class="tab" onclick="go('tokens')">📊 Tokens</div>
-      <div class="tab" onclick="go('mining')">⛏️ Mining</div>
-      <div class="tab" onclick="go('staking')">📈 Staking</div>
+      <div class="tab active" onclick="goTab('tokens', this)">📊 Tokens</div>
+      <div class="tab" onclick="goTab('mining', this)">⛏️ Mining</div>
+      <div class="tab" onclick="goTab('staking', this)">📈 Staking</div>
     </div>
-
   </div>
 
 </div>
 
-<!-- TOKENS PAGE -->
+<!-- TOKENS -->
 <div id="tokens" class="section">
   <div class="card">
     <h3>💰 Tokens</h3>
 
     <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-
       <div class="token"><span>₿ BTC</span><span>0.00</span></div>
       <div class="token"><span>🟡 BNB</span><span>0.00</span></div>
       <div class="token"><span>🪙 ALF</span><span>110.04</span></div>
@@ -155,8 +160,8 @@ body{
       <div class="token"><span>🌐 TRX</span><span>0.00</span></div>
       <div class="token"><span>🟣 PI</span><span>0.00</span></div>
       <div class="token"><span>🔷 SOL</span><span>0.00</span></div>
-
     </div>
+
   </div>
 </div>
 
@@ -195,22 +200,33 @@ body{
 
 <!-- BOTTOM NAV -->
 <div class="bottomNav">
-
-  <div class="navItem active" onclick="go('home')">🏠<br>Home</div>
-  <div class="navItem" onclick="go('explore')">🔍<br>Explore</div>
-  <div class="navItem" onclick="go('trade')">💱<br>Trade</div>
-  <div class="navItem" onclick="go('activity')">📊<br>Activity</div>
-  <div class="navItem" onclick="go('mining')">⛏️<br>Mining</div>
-
+  <div class="navItem active" onclick="goNav('home', this)">🏠<br>Home</div>
+  <div class="navItem" onclick="goNav('explore', this)">🔍<br>Explore</div>
+  <div class="navItem" onclick="goNav('trade', this)">💱<br>Trade</div>
+  <div class="navItem" onclick="goNav('activity', this)">📊<br>Activity</div>
+  <div class="navItem" onclick="goNav('mining', this)">⛏️<br>Mining</div>
 </div>
 
 <script>
-function go(page){
-  document.querySelectorAll(".section").forEach(s=>{
-    s.classList.remove("active");
-  });
+
+/* NAV */
+function goNav(page, el){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.getElementById(page).classList.add("active");
+
+  document.querySelectorAll(".navItem").forEach(i=>i.classList.remove("active"));
+  el.classList.add("active");
 }
+
+/* TABS */
+function goTab(page, el){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+}
+
 </script>
 
 </body>
