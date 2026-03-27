@@ -15,6 +15,9 @@ body{
 
 /* TOP */
 .top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   padding:15px;
   border-bottom:1px solid #eee;
 }
@@ -27,6 +30,45 @@ body{
 .sub{
   font-size:12px;
   color:#888;
+}
+
+/* MENU ICON */
+.menuBtn{
+  font-size:24px;
+  cursor:pointer;
+}
+
+/* POPUP MENU */
+#menuBox{
+  position:fixed;
+  top:70px;
+  right:15px;
+  width:200px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+  padding:10px;
+
+  opacity:0;
+  transform:scale(0.9);
+  pointer-events:none;
+  transition:0.25s;
+}
+
+#menuBox.show{
+  opacity:1;
+  transform:scale(1);
+  pointer-events:auto;
+}
+
+.menuItem{
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#f3f4f6;
 }
 
 /* ACTIONS */
@@ -92,7 +134,7 @@ body{
 
 .bottom span{
   display:block;
-  font-size:20px; /* 👈 icon size imeongezwa */
+  font-size:20px;
   margin-bottom:2px;
 }
 </style>
@@ -102,8 +144,22 @@ body{
 
 <!-- TOP -->
 <div class="top">
-  <div class="balance">$0.00</div>
-  <div class="sub">Total Balance</div>
+
+  <div>
+    <div class="balance" id="balance">$0.00</div>
+    <div class="sub" id="walletStatus">Not Connected</div>
+  </div>
+
+  <div class="menuBtn" onclick="openMenu()">☰</div>
+
+</div>
+
+<!-- MENU -->
+<div id="menuBox">
+  <div class="menuItem" onclick="connectWallet()">🔗 Connect Wallet</div>
+  <div class="menuItem" onclick="copyAddress()">📋 Copy Address</div>
+  <div class="menuItem">⚙️ Settings</div>
+  <div class="menuItem" onclick="closeMenu()">❌ Close</div>
 </div>
 
 <!-- ACTIONS -->
@@ -138,6 +194,67 @@ body{
   <div><span>📊</span>Activity</div>
   <div><span>🎁</span>Referral</div>
 </div>
+
+<script>
+
+/* MENU */
+function openMenu(){
+  document.getElementById("menuBox").classList.add("show");
+}
+function closeMenu(){
+  document.getElementById("menuBox").classList.remove("show");
+}
+
+document.addEventListener("click", function(e){
+  let menu = document.getElementById("menuBox");
+  let btn = document.querySelector(".menuBtn");
+
+  if(!menu.contains(e.target) && !btn.contains(e.target)){
+    closeMenu();
+  }
+});
+
+/* WALLET */
+let walletAddress = "";
+
+async function connectWallet(){
+  if(typeof window.ethereum !== "undefined"){
+    const accounts = await window.ethereum.request({
+      method:"eth_requestAccounts"
+    });
+
+    walletAddress = accounts[0];
+
+    let short = walletAddress.slice(0,6)+"..."+walletAddress.slice(-4);
+    document.getElementById("walletStatus").innerText = short;
+
+    getBalance();
+  }else{
+    alert("Install MetaMask");
+  }
+}
+
+async function getBalance(){
+  const balance = await ethereum.request({
+    method:"eth_getBalance",
+    params:[walletAddress,"latest"]
+  });
+
+  let bnb = parseInt(balance,16)/1e18;
+  document.getElementById("balance").innerText = "$"+(bnb*600).toFixed(2);
+}
+
+/* COPY ADDRESS */
+function copyAddress(){
+  if(walletAddress){
+    navigator.clipboard.writeText(walletAddress);
+    alert("Address copied");
+  }else{
+    alert("Connect wallet first");
+  }
+}
+
+</script>
 
 </body>
 </html>
