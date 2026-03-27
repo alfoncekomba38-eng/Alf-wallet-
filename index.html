@@ -1,163 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Wallet</title>
+<title>ALF Wallet Pro</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
-  background:#fff;
-  color:#111;
-  padding-bottom:90px;
+  background:#0f1115;
+  color:#fff;
 }
 
-.top{
+.header{
+  padding:15px;
+  background:#1a1d25;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:15px;
-  border-bottom:1px solid #eee;
 }
 
 .balance{
-  font-size:28px;
+  font-size:20px;
   font-weight:bold;
 }
 
-.sub{
+.status{
   font-size:12px;
-  color:#888;
+  color:#aaa;
 }
 
-.menuBtn{
-  font-size:24px;
+.section{
+  background:#1a1d25;
+  margin:10px;
+  padding:15px;
+  border-radius:12px;
 }
 
-/* ACTIONS */
-.actions{
+.btn{
+  background:#2a2f3a;
+  padding:12px;
+  text-align:center;
+  border-radius:10px;
+  margin-top:8px;
+  cursor:pointer;
+}
+
+.btn:hover{background:#3a4150;}
+
+.btn-row{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
-  padding:15px;
 }
 
-.action{
-  background:#f6f7f9;
-  padding:14px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:bold;
-}
-
-/* CARD */
-.card{
-  margin:10px 15px;
-  padding:10px 15px;
-  border:1px solid #eee;
-  border-radius:12px;
-}
-
-/* TASK */
-.task{
+.token{
   display:flex;
   justify-content:space-between;
-  padding:10px 0;
-  border-bottom:1px solid #eee;
+  padding:6px 0;
+  border-bottom:1px solid #2a2f3a;
 }
 
-.task button{
-  background:#4f6ef7;
-  color:#fff;
-  border:none;
-  padding:6px 10px;
-  border-radius:6px;
-}
+.small{font-size:12px;color:#aaa;}
 
-/* BOTTOM */
-.bottom{
+.nav{
   position:fixed;
   bottom:0;
-  left:0;
-  right:0;
+  width:100%;
+  background:#1a1d25;
   display:flex;
   justify-content:space-around;
   padding:10px 0;
-  border-top:1px solid #eee;
-  background:#fff;
+  border-top:1px solid #2a2f3a;
 }
+
+input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-top:8px;
+  background:#0f1115;
+  color:#fff;
+}
+
+.hidden{display:none;}
 </style>
 </head>
 
 <body>
 
-<!-- TOP -->
-<div class="top">
+<div class="header">
   <div>
-    <div class="balance" id="balance">$0.00</div>
-    <div class="sub" id="walletStatus">Not Connected</div>
+    <div class="balance">$<span id="bal">10.00</span> ALF</div>
+    <div class="status" id="status">Not Connected</div>
   </div>
-  <div class="menuBtn">☰</div>
+  <div onclick="connect()">☰</div>
 </div>
 
-<!-- ACTIONS -->
-<div class="actions">
-  <div class="action">🟢 Buy</div>
-  <div class="action">🔁 Swap</div>
-  <div class="action">📤 Send</div>
-  <div class="action">📥 Receive</div>
+<!-- QUICK ACTIONS -->
+<div class="section">
+  <div class="btn-row">
+    <div class="btn" onclick="buy()">🟢 Buy</div>
+    <div class="btn" onclick="swap()">🔁 Swap</div>
+    <div class="btn" onclick="send()">📤 Send</div>
+    <div class="btn" onclick="receive()">📥 Receive</div>
+  </div>
 </div>
 
 <!-- TOKENS -->
-<div class="card">
+<div class="section">
   <h3>📊 Tokens</h3>
-  <p>₿ BTC 0.00</p>
-  <p>🟡 BNB 0.00</p>
-  <p>🪙 ALF 0.00</p>
-  <p>💵 USDT 0.00</p>
-  <p>🌐 TRX 0.00</p>
+  <div class="token"><span>₿ BTC</span><span>0.00</span></div>
+  <div class="token"><span>🟡 BNB</span><span>0.00</span></div>
+  <div class="token"><span>🪙 ALF</span><span id="alfToken">10.00</span></div>
+  <div class="token"><span>💵 USDT</span><span>0.00</span></div>
 </div>
 
-<!-- MINING / STAKING -->
-<div class="card">
+<!-- MINING -->
+<div class="section">
   <h3>⛏️ Mining</h3>
-  <p>Coming soon...</p>
+  <p class="small">Earn ALF every 5 seconds</p>
+  <div class="btn" onclick="startMining()">Start Mining</div>
 </div>
 
-<div class="card">
-  <h3>📈 Staking</h3>
-  <p>Earn rewards soon...</p>
+<!-- STAKING -->
+<div class="section">
+  <h3>📈 Staking (10% APY Demo)</h3>
+  <input id="stakeAmt" placeholder="Enter amount">
+  <div class="btn" onclick="stake()">Stake</div>
+  <p class="small">Staked: <span id="staked">0</span> ALF</p>
 </div>
 
-<!-- REFERRAL + BONUS (NEW) -->
-<div class="actions">
-  <div class="action" onclick="copyReferral()">🎁 Copy Referral</div>
-  <div class="action" onclick="claimBonus()">⚡ Bonus</div>
+<!-- REFERRAL -->
+<div class="section">
+  <h3>🎁 Referral</h3>
+  <p class="small">Your code: <span id="refcode"></span></p>
+  <div class="btn" onclick="copyRef()">Copy Referral</div>
 </div>
 
-<!-- SOCIAL (NEW) -->
-<div class="card">
+<!-- SOCIAL -->
+<div class="section">
   <h3>🌐 Social Links</h3>
-
-  <div class="task">
-    <span>Telegram</span>
-    <button onclick="window.open('https://t.me/yourchannel')">Open</button>
-  </div>
-
-  <div class="task">
-    <span>Twitter</span>
-    <button onclick="window.open('https://twitter.com/yourpage')">Open</button>
-  </div>
-
-  <div class="task">
-    <span>YouTube</span>
-    <button onclick="window.open('https://youtube.com/@yourchannel')">Open</button>
+  <div class="btn-row">
+    <div class="btn">Telegram</div>
+    <div class="btn">Twitter</div>
+    <div class="btn">YouTube</div>
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
-<div class="bottom">
+<!-- NAV -->
+<div class="nav">
   <div>🏠 Home</div>
   <div>🔍 Explore</div>
   <div>💱 Trade</div>
@@ -166,24 +160,93 @@ body{
 </div>
 
 <script>
+let balance = parseFloat(localStorage.getItem("bal")) || 10;
+let staked = parseFloat(localStorage.getItem("staked")) || 0;
+let mining = false;
 
-let walletAddress = "";
-let alfBalance = 0;
+// load UI
+document.getElementById("bal").innerText = balance.toFixed(2);
+document.getElementById("alfToken").innerText = balance.toFixed(2);
+document.getElementById("staked").innerText = staked.toFixed(2);
 
-/* BONUS */
-function claimBonus(){
-  alfBalance += 5;
-  document.getElementById("balance").innerText = "$"+alfBalance.toFixed(2);
-  alert("🎉 Bonus +5 ALF");
+// referral code
+let ref = localStorage.getItem("ref");
+if(!ref){
+  ref = "ALF-" + Math.floor(Math.random()*99999);
+  localStorage.setItem("ref", ref);
+}
+document.getElementById("refcode").innerText = ref;
+
+// save
+function save(){
+  localStorage.setItem("bal", balance);
+  localStorage.setItem("staked", staked);
 }
 
-/* REFERRAL */
-function copyReferral(){
-  let link = window.location.href + "?ref=" + (walletAddress || "guest");
-  navigator.clipboard.writeText(link);
-  alert("Referral link copied!");
+// connect wallet (mock)
+function connect(){
+  document.getElementById("status").innerText = "Wallet Connected 🔗";
 }
 
+// mining
+function startMining(){
+  if(mining) return;
+  mining = true;
+
+  setInterval(()=>{
+    balance += 0.02;
+    update();
+  }, 5000);
+}
+
+// staking
+function stake(){
+  let amt = parseFloat(document.getElementById("stakeAmt").value);
+  if(amt > balance || !amt) return alert("Invalid amount");
+
+  balance -= amt;
+  staked += amt;
+
+  setInterval(()=>{
+    let reward = staked * 0.0002;
+    balance += reward;
+    update();
+  }, 5000);
+
+  update();
+}
+
+// referral copy
+function copyRef(){
+  navigator.clipboard.writeText(ref);
+  alert("Referral copied!");
+}
+
+// mock swap
+function swap(){
+  alert("Swap feature coming soon 🔁");
+}
+
+// send
+function send(){
+  let amt = prompt("Enter ALF amount:");
+  if(amt > balance) return alert("Not enough balance");
+  balance -= parseFloat(amt);
+  update();
+}
+
+// receive
+function receive(){
+  alert("Your wallet address: 0xALF-DEMO-ADDRESS");
+}
+
+// update UI
+function update(){
+  document.getElementById("bal").innerText = balance.toFixed(2);
+  document.getElementById("alfToken").innerText = balance.toFixed(2);
+  document.getElementById("staked").innerText = staked.toFixed(2);
+  save();
+}
 </script>
 
 </body>
