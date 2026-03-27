@@ -152,59 +152,45 @@ blockExplorerUrls: ["https://bscscan.com"]
 // CONNECT WALLET (STABLE)
 // =======================
 async function connect(){
-
 try{
 
 if(!window.ethereum){
-alert("MetaMask haipo!");
+alert("Install MetaMask");
 return;
 }
 
-console.log("Requesting wallet...");
-
-// request accounts
 const accounts = await window.ethereum.request({
-method: "eth_requestAccounts"
+method:"eth_requestAccounts"
 });
 
-if(!accounts || accounts.length === 0){
-throw new Error("No wallet found");
+if(!accounts.length){
+alert("No wallet found");
+return;
 }
 
 user = accounts[0];
 
-// switch network
-await switchToBNB();
-
-// IMPORTANT FIX: wait for wallet sync
-await new Promise(r => setTimeout(r, 1200));
-
-// provider refresh
 provider = new ethers.providers.Web3Provider(window.ethereum);
 
-// re-request permission (VERY IMPORTANT FIX)
+// IMPORTANT: ensure wallet ready
 await provider.send("eth_requestAccounts", []);
 
 signer = provider.getSigner();
 
-// contract
 contract = new ethers.Contract(TOKEN, abi, signer);
 
-// UI
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
 
-// load balance
 await loadBalance();
 
-alert("Connected SUCCESS ✅");
+alert("Connected OK ✔");
 
 }catch(e){
-console.log("ERROR:", e);
-alert("Connection failed ❌ check console");
+console.log("REAL ERROR:", e);
+alert(e.message);
 }
-
-}
+  }
 
 // =======================
 // LOAD BALANCE
