@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Full Exchange</title>
+<title>ALF Exchange FIX</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.min.js"></script>
 
@@ -43,15 +43,10 @@ border-radius:6px;
 border:1px solid #ccc;
 }
 
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
+margin-top:10px;
 }
 
 th,td{
@@ -76,11 +71,12 @@ font-size:12px;
 <div class="box">
 <h3>Wallet</h3>
 <div class="btn" onclick="connect()">Connect Wallet</div>
+<h4>Balance: <span id="bal">0</span> ALF</h4>
 </div>
 
 <!-- SWAP -->
 <div class="box">
-<h3>🔁 Swap (AMM)</h3>
+<h3>🔁 Swap (UI Ready)</h3>
 <input id="swapAmt" placeholder="Amount ALF">
 <div class="btn" onclick="swap()">Swap ALF ↔ BNB</div>
 </div>
@@ -92,10 +88,8 @@ font-size:12px;
 <input id="price" placeholder="Price">
 <input id="amount" placeholder="Amount">
 
-<div class="grid">
-<div class="btn" onclick="createOrder(true)">Buy</div>
-<div class="btn" onclick="createOrder(false)">Sell</div>
-</div>
+<div class="btn" onclick="addOrder('BUY')">Buy Order</div>
+<div class="btn" onclick="addOrder('SELL')">Sell Order</div>
 
 <table>
 <tr>
@@ -103,71 +97,68 @@ font-size:12px;
 <th>Price</th>
 <th>Amount</th>
 </tr>
-
 <tbody id="orders"></tbody>
 </table>
 
-</div>
-
-<!-- BALANCE -->
-<div class="box">
-<h3>💰 ALF Balance</h3>
-<div id="bal">0</div>
 </div>
 
 </div>
 
 <script>
 
-const TOKEN="0xD42B0217bb40E53800384f624b62Dd7F8465d766";
+// 🔴 IMPORTANT: YOUR REAL ALF TOKEN CONTRACT
+const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
-let provider,signer,user;
+let provider, signer, user, contract;
 
-let orderList=[];
+// ERC20 ABI (minimal)
+const abi = [
+"function balanceOf(address) view returns(uint256)",
+"function decimals() view returns(uint8)"
+];
 
 async function connect(){
-provider=new ethers.BrowserProvider(window.ethereum);
-await provider.send("eth_requestAccounts",[]);
-signer=await provider.getSigner();
-user=await signer.getAddress();
 
-document.getElementById("addr").innerText=
+provider = new ethers.BrowserProvider(window.ethereum);
+await provider.send("eth_requestAccounts",[]);
+
+signer = await provider.getSigner();
+user = await signer.getAddress();
+
+contract = new ethers.Contract(TOKEN, abi, signer);
+
+document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
+
+await loadBalance();
+}
+
+async function loadBalance(){
+let bal = await contract.balanceOf(user);
+let decimals = await contract.decimals();
+
+document.getElementById("bal").innerText =
+ethers.formatUnits(bal, decimals);
 }
 
 function swap(){
-alert("Swap executed (connect PancakeSwap router for real trading)");
+alert("Swap UI ready ✔ (next step: connect PancakeSwap router)");
 }
 
-function createOrder(isBuy){
+function addOrder(type){
 
-let p=document.getElementById("price").value;
-let a=document.getElementById("amount").value;
+let price = document.getElementById("price").value;
+let amount = document.getElementById("amount").value;
 
-orderList.push({
-type:isBuy?"BUY":"SELL",
-price:p,
-amount:a
-});
-
-render();
-}
-
-function render(){
-
-let html="";
-
-orderList.forEach(o=>{
-html+=`
+let row = `
 <tr>
-<td>${o.type}</td>
-<td>${o.price}</td>
-<td>${o.amount}</td>
+<td>${type}</td>
+<td>${price}</td>
+<td>${amount}</td>
 </tr>
 `;
-});
 
-document.getElementById("orders").innerHTML=html;
+document.getElementById("orders").innerHTML += row;
 }
 
 </script>
