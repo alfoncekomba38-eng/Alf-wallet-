@@ -67,21 +67,18 @@ font-size:12px;
 
 <div class="container">
 
-<!-- WALLET -->
 <div class="box">
 <h3>Wallet</h3>
 <div class="btn" onclick="connect()">Connect Wallet</div>
 <h4>Balance: <span id="bal">0</span> ALF</h4>
 </div>
 
-<!-- SWAP -->
 <div class="box">
 <h3>🔁 Swap (UI Ready)</h3>
 <input id="swapAmt" placeholder="Amount ALF">
 <div class="btn" onclick="swap()">Swap ALF ↔ BNB</div>
 </div>
 
-<!-- ORDER BOOK -->
 <div class="box">
 <h3>📊 Order Book</h3>
 
@@ -106,49 +103,93 @@ font-size:12px;
 
 <script>
 
-// 🔴 IMPORTANT: YOUR REAL ALF TOKEN CONTRACT
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
 let provider, signer, user, contract;
 
-// ERC20 ABI (minimal)
 const abi = [
 "function balanceOf(address) view returns(uint256)",
 "function decimals() view returns(uint8)"
 ];
 
+// 🔥 CONNECT FIXED
 async function connect(){
 
-provider = new ethers.BrowserProvider(window.ethereum);
-await provider.send("eth_requestAccounts",[]);
+if(!window.ethereum){
+alert("Install MetaMask!");
+return;
+}
 
+try{
+
+await window.ethereum.request({
+method: "eth_requestAccounts"
+});
+
+provider = new ethers.BrowserProvider(window.ethereum);
 signer = await provider.getSigner();
 user = await signer.getAddress();
 
 contract = new ethers.Contract(TOKEN, abi, signer);
 
+// show address
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
 
+// load balance
 await loadBalance();
+
+alert("Wallet Connected 🔗");
+
+}catch(e){
+console.log(e);
+alert("Connection failed ❌");
 }
 
+}
+
+// 🔥 AUTO CONNECT
+window.onload = async () => {
+if(window.ethereum){
+try{
+const acc = await window.ethereum.request({
+method:"eth_accounts"
+});
+if(acc.length > 0){
+connect();
+}
+}catch(e){}
+}
+};
+
+// 🔥 LOAD BALANCE SAFE
 async function loadBalance(){
+try{
 let bal = await contract.balanceOf(user);
 let decimals = await contract.decimals();
 
 document.getElementById("bal").innerText =
 ethers.formatUnits(bal, decimals);
+}catch(e){
+console.log("Balance error:", e);
+}
 }
 
+// SWAP
 function swap(){
-alert("Swap UI ready ✔ (next step: connect PancakeSwap router)");
+alert("Swap ready ✔ (next step: PancakeSwap)");
 }
 
+// ORDER BOOK
 function addOrder(type){
 
 let price = document.getElementById("price").value;
 let amount = document.getElementById("amount").value;
+
+if(!price || !amount){
+alert("Weka price na amount");
+return;
+}
 
 let row = `
 <tr>
