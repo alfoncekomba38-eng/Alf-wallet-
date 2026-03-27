@@ -10,10 +10,9 @@ body{
   font-family:Arial;
   background:#fff;
   color:#111;
-  padding-bottom:80px;
+  padding-bottom:90px;
 }
 
-/* TOP */
 .top{
   display:flex;
   justify-content:space-between;
@@ -32,43 +31,8 @@ body{
   color:#888;
 }
 
-/* MENU ICON */
 .menuBtn{
   font-size:24px;
-  cursor:pointer;
-}
-
-/* POPUP MENU */
-#menuBox{
-  position:fixed;
-  top:70px;
-  right:15px;
-  width:200px;
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  padding:10px;
-
-  opacity:0;
-  transform:scale(0.9);
-  pointer-events:none;
-  transition:0.25s;
-}
-
-#menuBox.show{
-  opacity:1;
-  transform:scale(1);
-  pointer-events:auto;
-}
-
-.menuItem{
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-.menuItem:hover{
-  background:#f3f4f6;
 }
 
 /* ACTIONS */
@@ -87,17 +51,7 @@ body{
   font-weight:bold;
 }
 
-/* MENU ROW */
-.menuRow{
-  display:flex;
-  justify-content:space-around;
-  padding:0 10px;
-  font-weight:bold;
-  font-size:13px;
-  margin-bottom:5px;
-}
-
-/* TOKENS */
+/* CARD */
 .card{
   margin:10px 15px;
   padding:10px 15px;
@@ -105,15 +59,23 @@ body{
   border-radius:12px;
 }
 
-.token{
+/* TASK */
+.task{
   display:flex;
   justify-content:space-between;
   padding:10px 0;
-  border-bottom:1px solid #f3f3f3;
-  font-weight:bold;
+  border-bottom:1px solid #eee;
 }
 
-/* BOTTOM NAV */
+.task button{
+  background:#4f6ef7;
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+}
+
+/* BOTTOM */
 .bottom{
   position:fixed;
   bottom:0;
@@ -125,18 +87,6 @@ body{
   border-top:1px solid #eee;
   background:#fff;
 }
-
-.bottom div{
-  text-align:center;
-  font-size:14px;
-  font-weight:500;
-}
-
-.bottom span{
-  display:block;
-  font-size:20px;
-  margin-bottom:2px;
-}
 </style>
 </head>
 
@@ -144,22 +94,11 @@ body{
 
 <!-- TOP -->
 <div class="top">
-
   <div>
     <div class="balance" id="balance">$0.00</div>
     <div class="sub" id="walletStatus">Not Connected</div>
   </div>
-
-  <div class="menuBtn" onclick="openMenu()">☰</div>
-
-</div>
-
-<!-- MENU -->
-<div id="menuBox">
-  <div class="menuItem" onclick="connectWallet()">🔗 Connect Wallet</div>
-  <div class="menuItem" onclick="copyAddress()">📋 Copy Address</div>
-  <div class="menuItem">⚙️ Settings</div>
-  <div class="menuItem" onclick="closeMenu()">❌ Close</div>
+  <div class="menuBtn">☰</div>
 </div>
 
 <!-- ACTIONS -->
@@ -170,88 +109,79 @@ body{
   <div class="action">📥 Receive</div>
 </div>
 
-<!-- MENU TEXT ROW -->
-<div class="menuRow">
-  <div>📊 Tokens</div>
-  <div>⛏️ Mining</div>
-  <div>📈 Staking</div>
-</div>
-
 <!-- TOKENS -->
 <div class="card">
-  <div class="token"><span>₿ BTC</span><span>0.00</span></div>
-  <div class="token"><span>🟡 BNB</span><span>0.00</span></div>
-  <div class="token"><span>🪙 ALF</span><span>0.00</span></div>
-  <div class="token"><span>💵 USDT</span><span>0.00</span></div>
-  <div class="token"><span>🌐 TRX</span><span>0.00</span></div>
+  <h3>📊 Tokens</h3>
+  <p>₿ BTC 0.00</p>
+  <p>🟡 BNB 0.00</p>
+  <p>🪙 ALF 0.00</p>
+  <p>💵 USDT 0.00</p>
+  <p>🌐 TRX 0.00</p>
+</div>
+
+<!-- MINING / STAKING -->
+<div class="card">
+  <h3>⛏️ Mining</h3>
+  <p>Coming soon...</p>
+</div>
+
+<div class="card">
+  <h3>📈 Staking</h3>
+  <p>Earn rewards soon...</p>
+</div>
+
+<!-- REFERRAL + BONUS (NEW) -->
+<div class="actions">
+  <div class="action" onclick="copyReferral()">🎁 Copy Referral</div>
+  <div class="action" onclick="claimBonus()">⚡ Bonus</div>
+</div>
+
+<!-- SOCIAL (NEW) -->
+<div class="card">
+  <h3>🌐 Social Links</h3>
+
+  <div class="task">
+    <span>Telegram</span>
+    <button onclick="window.open('https://t.me/yourchannel')">Open</button>
+  </div>
+
+  <div class="task">
+    <span>Twitter</span>
+    <button onclick="window.open('https://twitter.com/yourpage')">Open</button>
+  </div>
+
+  <div class="task">
+    <span>YouTube</span>
+    <button onclick="window.open('https://youtube.com/@yourchannel')">Open</button>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
 <div class="bottom">
-  <div><span>🏠</span>Home</div>
-  <div><span>🔍</span>Explore</div>
-  <div><span>💱</span>Trade</div>
-  <div><span>📊</span>Activity</div>
-  <div><span>🎁</span>Referral</div>
+  <div>🏠 Home</div>
+  <div>🔍 Explore</div>
+  <div>💱 Trade</div>
+  <div>📊 Activity</div>
+  <div>🎁 Referral</div>
 </div>
 
 <script>
 
-/* MENU */
-function openMenu(){
-  document.getElementById("menuBox").classList.add("show");
-}
-function closeMenu(){
-  document.getElementById("menuBox").classList.remove("show");
-}
-
-document.addEventListener("click", function(e){
-  let menu = document.getElementById("menuBox");
-  let btn = document.querySelector(".menuBtn");
-
-  if(!menu.contains(e.target) && !btn.contains(e.target)){
-    closeMenu();
-  }
-});
-
-/* WALLET */
 let walletAddress = "";
+let alfBalance = 0;
 
-async function connectWallet(){
-  if(typeof window.ethereum !== "undefined"){
-    const accounts = await window.ethereum.request({
-      method:"eth_requestAccounts"
-    });
-
-    walletAddress = accounts[0];
-
-    let short = walletAddress.slice(0,6)+"..."+walletAddress.slice(-4);
-    document.getElementById("walletStatus").innerText = short;
-
-    getBalance();
-  }else{
-    alert("Install MetaMask");
-  }
+/* BONUS */
+function claimBonus(){
+  alfBalance += 5;
+  document.getElementById("balance").innerText = "$"+alfBalance.toFixed(2);
+  alert("🎉 Bonus +5 ALF");
 }
 
-async function getBalance(){
-  const balance = await ethereum.request({
-    method:"eth_getBalance",
-    params:[walletAddress,"latest"]
-  });
-
-  let bnb = parseInt(balance,16)/1e18;
-  document.getElementById("balance").innerText = "$"+(bnb*600).toFixed(2);
-}
-
-/* COPY ADDRESS */
-function copyAddress(){
-  if(walletAddress){
-    navigator.clipboard.writeText(walletAddress);
-    alert("Address copied");
-  }else{
-    alert("Connect wallet first");
-  }
+/* REFERRAL */
+function copyReferral(){
+  let link = window.location.href + "?ref=" + (walletAddress || "guest");
+  navigator.clipboard.writeText(link);
+  alert("Referral link copied!");
 }
 
 </script>
