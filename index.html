@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Exchange PRO</title>
 
-<!-- ✅ FIX 1: Stable ethers CDN -->
 <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
 <style>
@@ -16,6 +15,7 @@ background:#111;
 color:#fff;
 display:flex;
 justify-content:space-between;
+align-items:center;
 }
 
 .container{padding:10px}
@@ -105,51 +105,52 @@ font-size:12px;
 <script>
 
 // =======================
-// SAFETY CHECK (FIX 2)
+// SAFETY CHECK
 // =======================
 if(typeof ethers === "undefined"){
-alert("Ethers haijaload! check internet/CDN");
+alert("Ethers haijaload");
 throw new Error("ethers missing");
 }
 
-// ===== TOKEN =====
+// ===== TOKEN (BEP20) =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
 // ===== GLOBALS =====
 let provider, signer, user, contract;
 
-// ===== ABI =====
+// ===== ERC20 ABI =====
 const abi = [
 "function balanceOf(address) view returns(uint256)",
-"function decimals() view returns(uint8)"
+"function decimals() view returns(uint8)",
+"function symbol() view returns(string)",
+"function name() view returns(string)"
 ];
 
-console.log("ALF Exchange loaded ✔");
+console.log("ALF Exchange FULL READY ✔");
 
 // =======================
-// SWITCH NETWORK
+// NETWORK SWITCH
 // =======================
 async function switchToBNB(){
 try{
 await window.ethereum.request({
-method: "wallet_switchEthereumChain",
-params: [{ chainId: "0x38" }]
+method:"wallet_switchEthereumChain",
+params:[{ chainId:"0x38" }]
 });
 }catch(e){
-
 if(e.code === 4902){
 await window.ethereum.request({
-method: "wallet_addEthereumChain",
-params: [{
-chainId: "0x38",
-chainName: "BNB Smart Chain",
-rpcUrls: ["https://bsc-dataseed.binance.org/"],
-nativeCurrency: {
-name: "BNB",
-symbol: "BNB",
-decimals: 18
+method:"wallet_addEthereumChain",
+params:[{
+chainId:"0x38",
+chainName:"BNB Smart Chain",
+rpcUrls:["https://bsc-dataseed.binance.org/"],
+nativeCurrency:{
+name:"BNB",
+symbol:"BNB",
+decimals:18
 },
-blockExplorerUrls: ["https://bscscan.com"]
+blockExplorerUrls:["https://bscscan.com"]
 }]
 });
 }
@@ -157,7 +158,7 @@ blockExplorerUrls: ["https://bscscan.com"]
 }
 
 // =======================
-// CONNECT WALLET (FIXED)
+// CONNECT WALLET
 // =======================
 async function connect(){
 try{
@@ -171,23 +172,11 @@ const accounts = await window.ethereum.request({
 method:"eth_requestAccounts"
 });
 
-if(!accounts.length){
-throw new Error("No wallet found");
-}
-
 user = accounts[0];
 
-// switch network
 await switchToBNB();
 
-// IMPORTANT FIX: delay
-await new Promise(r => setTimeout(r, 1000));
-
 provider = new ethers.providers.Web3Provider(window.ethereum);
-
-// re-request permission (IMPORTANT FIX)
-await provider.send("eth_requestAccounts", []);
-
 signer = provider.getSigner();
 
 contract = new ethers.Contract(TOKEN, abi, signer);
@@ -195,43 +184,60 @@ contract = new ethers.Contract(TOKEN, abi, signer);
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
 
+// TOKEN CHECK
+try{
+const symbol = await contract.symbol();
+console.log("TOKEN:", symbol);
+}catch(e){
+alert("Invalid BEP20 contract");
+}
+
 await loadBalance();
 
-alert("Connected OK ✔");
+alert("Connected ✔");
 
 }catch(e){
-console.log("ERROR:", e);
+console.log(e);
 alert(e.message);
 }
 }
 
 // =======================
-// LOAD BALANCE
+// REAL BALANCE SAFE
 // =======================
 async function loadBalance(){
 try{
+
 if(!contract) return;
 
-let bal = await contract.balanceOf(user);
-let decimals = await contract.decimals();
+const bal = await contract.balanceOf(user);
+
+let decimals = 18;
+
+try{
+decimals = await contract.decimals();
+}catch(e){}
+
+const formatted = ethers.utils.formatUnits(bal, decimals);
 
 document.getElementById("bal").innerText =
-ethers.utils.formatUnits(bal, decimals);
+parseFloat(formatted).toLocaleString();
 
 }catch(e){
 console.log("Balance error:", e);
+document.getElementById("bal").innerText = "0";
 }
 }
 
 // =======================
-// SWAP (DEMO)
+// SWAP DEMO
 // =======================
 function swap(){
-alert("Swap bado demo 🔁");
+alert("Swap bado demo 🔁 (next step: real PancakeSwap)");
 }
 
 // =======================
-// ORDER BOOK
+// ORDER BOOK UI
 // =======================
 function addOrder(type){
 
@@ -239,7 +245,7 @@ let price = document.getElementById("price").value;
 let amount = document.getElementById("amount").value;
 
 if(!price || !amount){
-alert("Jaza price na amount");
+alert("Fill all fields");
 return;
 }
 
