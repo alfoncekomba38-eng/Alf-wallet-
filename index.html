@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Exchange FIX</title>
+<title>ALF Exchange FINAL</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
@@ -102,9 +102,11 @@ font-size:12px;
 </div>
 
 <script>
+
 // ===== TOKEN =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
+// ===== GLOBALS =====
 let provider, signer, user, contract;
 
 // ===== ABI =====
@@ -113,7 +115,9 @@ const abi = [
 "function decimals() view returns(uint8)"
 ];
 
-// 🔥 SWITCH BNB
+// =======================
+// SWITCH TO BNB CHAIN
+// =======================
 async function switchToBNB(){
 try{
 await window.ethereum.request({
@@ -121,45 +125,85 @@ method: "wallet_switchEthereumChain",
 params: [{ chainId: "0x38" }]
 });
 }catch(e){
-console.log(e);
+
+// add network if missing
+if(e.code === 4902){
+await window.ethereum.request({
+method: "wallet_addEthereumChain",
+params: [{
+chainId: "0x38",
+chainName: "BNB Smart Chain",
+rpcUrls: ["https://bsc-dataseed.binance.org/"],
+nativeCurrency: {
+name: "BNB",
+symbol: "BNB",
+decimals: 18
+},
+blockExplorerUrls: ["https://bscscan.com"]
+}]
+});
+}
+
 }
 }
 
-// 🔥 CONNECT
+// =======================
+// CONNECT WALLET (FIXED)
+// =======================
 async function connect(){
-
-if(!window.ethereum){
-alert("Install MetaMask!");
-return;
-}
 
 try{
 
-await switchToBNB();
+console.log("MetaMask:", window.ethereum);
 
+if(!window.ethereum){
+alert("MetaMask haipo!");
+return;
+}
+
+// STEP 1: request wallet
 const accounts = await window.ethereum.request({
 method: "eth_requestAccounts"
 });
 
+if(!accounts || accounts.length === 0){
+alert("Hakuna wallet");
+return;
+}
+
 user = accounts[0];
 
+// STEP 2: switch network
+await switchToBNB();
+
+// STEP 3: provider setup
 provider = new ethers.providers.Web3Provider(window.ethereum);
+await provider.send("eth_requestAccounts", []);
+
 signer = provider.getSigner();
 
+// STEP 4: contract
+contract = new ethers.Contract(TOKEN, abi, signer);
+
+// UI update
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
 
-contract = new ethers.Contract(TOKEN, abi, signer);
-
+// load balance
 await loadBalance();
 
+alert("Connected SUCCESS ✅");
+
 }catch(e){
-console.log(e);
-alert("Connection failed");
-}
+console.log("ERROR:", e);
+alert("Connection failed ❌ check console (F12)");
 }
 
-// 🔥 BALANCE
+}
+
+// =======================
+// LOAD BALANCE
+// =======================
 async function loadBalance(){
 try{
 let bal = await contract.balanceOf(user);
@@ -172,12 +216,16 @@ console.log(e);
 }
 }
 
-// 🔁 SWAP (dummy)
+// =======================
+// SWAP (dummy for now)
+// =======================
 function swap(){
-alert("Swap system bado haijaunganishwa 🔁");
+alert("Swap bado ni demo 🔁 (next step nitakufanyia REAL DEX)");
 }
 
-// 📊 ORDERS
+// =======================
+// ORDER BOOK (UI only)
+// =======================
 function addOrder(type){
 
 let price = document.getElementById("price").value;
@@ -197,7 +245,9 @@ document.getElementById("orders").innerHTML += `
 `;
 }
 
-// 🔥 AUTO CONNECT
+// =======================
+// AUTO CONNECT
+// =======================
 window.onload = async () => {
 if(window.ethereum){
 try{
@@ -210,6 +260,7 @@ connect();
 }catch(e){}
 }
 };
+
 </script>
 
 </body>
