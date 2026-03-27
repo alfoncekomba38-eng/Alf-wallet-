@@ -102,25 +102,26 @@ font-size:12px;
 </div>
 
 <script>
-
+// ===== TOKEN =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
 let provider, signer, user, contract;
 
+// ===== ABI =====
 const abi = [
 "function balanceOf(address) view returns(uint256)",
 "function decimals() view returns(uint8)"
-];<script>
+];
 
-// 🔥 FORCE BNB CHAIN
+// 🔥 SWITCH BNB
 async function switchToBNB(){
 try{
 await window.ethereum.request({
-method: 'wallet_switchEthereumChain',
-params: [{ chainId: '0x38' }]
+method: "wallet_switchEthereumChain",
+params: [{ chainId: "0x38" }]
 });
 }catch(e){
-console.log("Switch error:", e);
+console.log(e);
 }
 }
 
@@ -140,14 +141,10 @@ const accounts = await window.ethereum.request({
 method: "eth_requestAccounts"
 });
 
-if(accounts.length === 0){
-alert("No account");
-return;
-}
+user = accounts[0];
 
 provider = new ethers.providers.Web3Provider(window.ethereum);
 signer = provider.getSigner();
-user = accounts[0];
 
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
@@ -156,13 +153,10 @@ contract = new ethers.Contract(TOKEN, abi, signer);
 
 await loadBalance();
 
-alert("Connected ✅");
-
 }catch(e){
 console.log(e);
-alert("Connection failed ❌");
+alert("Connection failed");
 }
-
 }
 
 // 🔥 BALANCE
@@ -178,31 +172,29 @@ console.log(e);
 }
 }
 
-// 🔁 SWAP
+// 🔁 SWAP (dummy)
 function swap(){
-alert("Swap coming soon 🔁");
+alert("Swap system bado haijaunganishwa 🔁");
 }
 
-// 📊 ORDER BOOK
+// 📊 ORDERS
 function addOrder(type){
 
 let price = document.getElementById("price").value;
 let amount = document.getElementById("amount").value;
 
 if(!price || !amount){
-alert("Weka price na amount");
+alert("Jaza price na amount");
 return;
 }
 
-let row = `
+document.getElementById("orders").innerHTML += `
 <tr>
 <td>${type}</td>
 <td>${price}</td>
 <td>${amount}</td>
 </tr>
 `;
-
-document.getElementById("orders").innerHTML += row;
 }
 
 // 🔥 AUTO CONNECT
@@ -218,5 +210,7 @@ connect();
 }catch(e){}
 }
 };
-
 </script>
+
+</body>
+</html>
