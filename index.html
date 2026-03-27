@@ -4,7 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Exchange PRO</title>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+<!-- ✅ FIX 1: Stable ethers CDN -->
+<script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#fff;color:#111}
@@ -103,6 +104,14 @@ font-size:12px;
 
 <script>
 
+// =======================
+// SAFETY CHECK (FIX 2)
+// =======================
+if(typeof ethers === "undefined"){
+alert("Ethers haijaload! check internet/CDN");
+throw new Error("ethers missing");
+}
+
 // ===== TOKEN =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
@@ -118,7 +127,7 @@ const abi = [
 console.log("ALF Exchange loaded ✔");
 
 // =======================
-// SWITCH NETWORK (BNB)
+// SWITCH NETWORK
 // =======================
 async function switchToBNB(){
 try{
@@ -126,7 +135,6 @@ await window.ethereum.request({
 method: "wallet_switchEthereumChain",
 params: [{ chainId: "0x38" }]
 });
-console.log("BNB Network OK ✔");
 }catch(e){
 
 if(e.code === 4902){
@@ -149,7 +157,7 @@ blockExplorerUrls: ["https://bscscan.com"]
 }
 
 // =======================
-// CONNECT WALLET (STABLE)
+// CONNECT WALLET (FIXED)
 // =======================
 async function connect(){
 try{
@@ -164,15 +172,20 @@ method:"eth_requestAccounts"
 });
 
 if(!accounts.length){
-alert("No wallet found");
-return;
+throw new Error("No wallet found");
 }
 
 user = accounts[0];
 
+// switch network
+await switchToBNB();
+
+// IMPORTANT FIX: delay
+await new Promise(r => setTimeout(r, 1000));
+
 provider = new ethers.providers.Web3Provider(window.ethereum);
 
-// IMPORTANT: ensure wallet ready
+// re-request permission (IMPORTANT FIX)
 await provider.send("eth_requestAccounts", []);
 
 signer = provider.getSigner();
@@ -187,10 +200,10 @@ await loadBalance();
 alert("Connected OK ✔");
 
 }catch(e){
-console.log("REAL ERROR:", e);
+console.log("ERROR:", e);
 alert(e.message);
 }
-  }
+}
 
 // =======================
 // LOAD BALANCE
@@ -211,14 +224,14 @@ console.log("Balance error:", e);
 }
 
 // =======================
-// SWAP (DEMO ONLY)
+// SWAP (DEMO)
 // =======================
 function swap(){
-alert("Swap bado demo 🔁 (next upgrade nitakufanyia real DEX)");
+alert("Swap bado demo 🔁");
 }
 
 // =======================
-// ORDER BOOK (UI ONLY)
+// ORDER BOOK
 // =======================
 function addOrder(type){
 
@@ -244,16 +257,12 @@ document.getElementById("orders").innerHTML += `
 // =======================
 window.onload = async () => {
 if(window.ethereum){
-try{
 const acc = await window.ethereum.request({
 method:"eth_accounts"
 });
 
 if(acc.length > 0){
 connect();
-}
-}catch(e){
-console.log(e);
 }
 }
 };
