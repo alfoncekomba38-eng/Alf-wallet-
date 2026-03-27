@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Exchange FIX</title>
 
-<!-- 🔥 FIX: ethers v5 -->
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
 <style>
@@ -75,7 +74,7 @@ font-size:12px;
 </div>
 
 <div class="box">
-<h3>🔁 Swap (UI Ready)</h3>
+<h3>🔁 Swap</h3>
 <input id="swapAmt" placeholder="Amount ALF">
 <div class="btn" onclick="swap()">Swap ALF ↔ BNB</div>
 </div>
@@ -110,102 +109,4 @@ let provider, signer, user, contract;
 
 const abi = [
 "function balanceOf(address) view returns(uint256)",
-"function decimals() view returns(uint8)"
-];
-
-// 🔥 CONNECT FIX (META MASK MOBILE READY)
-async function connect(){
-
-if(!window.ethereum){
-alert("Install MetaMask!");
-return;
-}
-
-try{
-
-await window.ethereum.request({
-method: "eth_requestAccounts"
-});
-
-// ✅ FIX
-provider = new ethers.providers.Web3Provider(window.ethereum);
-signer = provider.getSigner();
-user = await signer.getAddress();
-
-// show address
-document.getElementById("addr").innerText =
-user.slice(0,6)+"..."+user.slice(-4);
-
-// contract
-contract = new ethers.Contract(TOKEN, abi, signer);
-
-// load balance
-await loadBalance();
-
-alert("Wallet Connected 🔗");
-
-}catch(e){
-console.log(e);
-alert("Connection failed ❌");
-}
-
-}
-
-// 🔥 AUTO CONNECT
-window.onload = async () => {
-if(window.ethereum){
-try{
-const accounts = await window.ethereum.request({
-method:"eth_accounts"
-});
-if(accounts.length > 0){
-connect();
-}
-}catch(e){}
-}
-};
-
-// 🔥 BALANCE FIX
-async function loadBalance(){
-try{
-let bal = await contract.balanceOf(user);
-let decimals = await contract.decimals();
-
-document.getElementById("bal").innerText =
-ethers.utils.formatUnits(bal, decimals);
-}catch(e){
-console.log("Balance error:", e);
-}
-}
-
-// SWAP
-function swap(){
-alert("Swap ready ✔ (next step: PancakeSwap)");
-}
-
-// ORDER BOOK
-function addOrder(type){
-
-let price = document.getElementById("price").value;
-let amount = document.getElementById("amount").value;
-
-if(!price || !amount){
-alert("Weka price na amount");
-return;
-}
-
-let row = `
-<tr>
-<td>${type}</td>
-<td>${price}</td>
-<td>${amount}</td>
-</tr>
-`;
-
-document.getElementById("orders").innerHTML += row;
-}
-
-</script>
-
-</body>
-</html>
+"function decimals()
