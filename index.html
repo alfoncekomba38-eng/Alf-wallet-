@@ -4,7 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Exchange FIX</title>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.min.js"></script>
+<!-- 🔥 FIX: ethers v5 -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#fff;color:#111}
@@ -112,7 +113,7 @@ const abi = [
 "function decimals() view returns(uint8)"
 ];
 
-// 🔥 CONNECT FIXED
+// 🔥 CONNECT FIX (META MASK MOBILE READY)
 async function connect(){
 
 if(!window.ethereum){
@@ -126,15 +127,17 @@ await window.ethereum.request({
 method: "eth_requestAccounts"
 });
 
-provider = new ethers.BrowserProvider(window.ethereum);
-signer = await provider.getSigner();
+// ✅ FIX
+provider = new ethers.providers.Web3Provider(window.ethereum);
+signer = provider.getSigner();
 user = await signer.getAddress();
-
-contract = new ethers.Contract(TOKEN, abi, signer);
 
 // show address
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
+
+// contract
+contract = new ethers.Contract(TOKEN, abi, signer);
 
 // load balance
 await loadBalance();
@@ -152,24 +155,24 @@ alert("Connection failed ❌");
 window.onload = async () => {
 if(window.ethereum){
 try{
-const acc = await window.ethereum.request({
+const accounts = await window.ethereum.request({
 method:"eth_accounts"
 });
-if(acc.length > 0){
+if(accounts.length > 0){
 connect();
 }
 }catch(e){}
 }
 };
 
-// 🔥 LOAD BALANCE SAFE
+// 🔥 BALANCE FIX
 async function loadBalance(){
 try{
 let bal = await contract.balanceOf(user);
 let decimals = await contract.decimals();
 
 document.getElementById("bal").innerText =
-ethers.formatUnits(bal, decimals);
+ethers.utils.formatUnits(bal, decimals);
 }catch(e){
 console.log("Balance error:", e);
 }
