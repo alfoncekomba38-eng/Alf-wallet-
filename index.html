@@ -83,7 +83,9 @@ border:1px solid #ccc;
 <h4>Total Referrals: <span id="refs">0</span></h4>
 <h4>Referral Reward: <span id="refReward">0</span> ALF</h4>
 
-<div class="btn" onclick="copyRef()">Copy Link</div>
+<div class="btn" onclick="copyRef()">📋 Copy Link</div>
+<div class="btn" onclick="shareRef()">📤 Share Link</div>
+
 </div>
 
 </div>
@@ -102,7 +104,7 @@ let lastUpdate = Date.now();
 let miningActive = false;
 const RATE = 0.000002;
 
-// ===== REFERRAL =====
+// ===== REF =====
 let referrals = 0;
 let refReward = 0;
 let refUser = null;
@@ -182,7 +184,7 @@ let bonus = gain * 0.05;
 refReward += bonus;
 
 document.getElementById("refReward").innerText =
-refReward.toFixed(4);
+refReward.toFixed(6);
 }
 
 lastUpdate = now;
@@ -228,7 +230,9 @@ return params.get("ref");
 }
 
 function generateRef(){
-let link = window.location.href.split("?")[0] + "?ref=" + user;
+if(!user) return;
+
+let link = window.location.origin + window.location.pathname + "?ref=" + user;
 document.getElementById("refLink").value = link;
 }
 
@@ -237,6 +241,23 @@ let input = document.getElementById("refLink");
 input.select();
 document.execCommand("copy");
 alert("Copied ✔");
+}
+
+// 🔥 SHARE FUNCTION
+function shareRef(){
+
+let link = document.getElementById("refLink").value;
+
+if(navigator.share){
+navigator.share({
+title: "ALF Exchange",
+text: "Join and earn crypto 💰",
+url: link
+});
+}else{
+window.open("https://wa.me/?text=" + encodeURIComponent(link), "_blank");
+}
+
 }
 
 // ================= AUTO =================
