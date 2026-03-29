@@ -50,15 +50,18 @@ border:1px solid #ccc;
 
 <div class="top">
 <div>💎 ALF Exchange</div>
-<div id="addr">Not Connected</div>
+<div id="walletStatus">🔴 Not Connected</div>
 </div>
 
 <div class="container">
 
-<!-- WALLET -->
+<!-- WALLET PRO -->
 <div class="box">
 <h3>Wallet</h3>
-<div class="btn" onclick="connect()">Connect Wallet</div>
+
+<div class="btn" id="connectBtn" onclick="connectWallet()">Connect Wallet</div>
+<div class="btn" id="installBtn" onclick="installMetaMask()" style="display:none">Install MetaMask</div>
+
 <h4>Balance: <span id="bal">0</span> ALF</h4>
 </div>
 
@@ -115,14 +118,20 @@ const abi = [
 "function decimals() view returns(uint8)"
 ];
 
-// ================= CONNECT =================
-async function connect(){
-try{
+// ================= META MASK CHECK =================
+function isMetaMaskInstalled(){
+return typeof window.ethereum !== "undefined";
+}
 
-if(!window.ethereum){
-alert("Install MetaMask");
+// ================= WALLET CONNECT PRO =================
+async function connectWallet(){
+
+if(!isMetaMaskInstalled()){
+showInstall();
 return;
 }
+
+try{
 
 const acc = await window.ethereum.request({
 method:"eth_requestAccounts"
@@ -135,8 +144,10 @@ signer = provider.getSigner();
 
 contract = new ethers.Contract(TOKEN, abi, signer);
 
-document.getElementById("addr").innerText =
-user.slice(0,6)+"..."+user.slice(-4);
+document.getElementById("walletStatus").innerText =
+"🟢 " + user.slice(0,6) + "..." + user.slice(-4);
+
+document.getElementById("connectBtn").innerText = "Connected ✔";
 
 await loadBalance();
 
@@ -150,11 +161,40 @@ document.getElementById("refs").innerText = referrals;
 
 generateRef();
 
-alert("Connected ✔");
+window.ethereum.on("accountsChanged", ()=>{
+location.reload();
+});
 
 }catch(e){
 console.log(e);
 }
+
+}
+
+// ================= INSTALL META MASK =================
+function installMetaMask(){
+window.open("https://metamask.io/download/", "_blank");
+}
+
+// ================= SHOW INSTALL =================
+function showInstall(){
+document.getElementById("installBtn").style.display = "block";
+document.getElementById("connectBtn").style.display = "none";
+
+document.getElementById("walletStatus").innerText =
+"⚠ MetaMask Not Installed";
+}
+
+// ================= AUTO CHECK =================
+window.onload = function(){
+
+if(!isMetaMaskInstalled()){
+showInstall();
+}else{
+document.getElementById("walletStatus").innerText =
+"🔵 Ready to connect";
+}
+
 }
 
 // ================= BALANCE =================
@@ -166,7 +206,7 @@ document.getElementById("bal").innerText =
 parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
 }
 
-// ================= MINING =================
+// ================= STAKING =================
 function updateReward(){
 
 if(!miningActive) return;
@@ -178,7 +218,6 @@ let gain = staked * RATE * seconds;
 
 reward += gain;
 
-// REF BONUS
 if(refUser){
 let bonus = gain * 0.05;
 refReward += bonus;
@@ -243,24 +282,23 @@ document.execCommand("copy");
 alert("Copied ✔");
 }
 
-// 🔥 SHARE FUNCTION
 function shareRef(){
 
 let link = document.getElementById("refLink").value;
 
 if(navigator.share){
 navigator.share({
-title: "ALF Exchange",
-text: "Join and earn crypto 💰",
-url: link
+title:"ALF Exchange",
+text:"Join ALF and earn crypto 💰",
+url:link
 });
 }else{
-window.open("https://wa.me/?text=" + encodeURIComponent(link), "_blank");
+window.open("https://wa.me/?text="+encodeURIComponent(link), "_blank");
 }
 
 }
 
-// ================= AUTO =================
+// ================= LOOP =================
 setInterval(updateReward, 1000);
 
 </script>
