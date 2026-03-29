@@ -43,19 +43,6 @@ margin-top:8px;
 border-radius:6px;
 border:1px solid #ccc;
 }
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
-font-size:12px;
-}
 </style>
 </head>
 
@@ -79,34 +66,24 @@ font-size:12px;
 <div class="box">
 <h3>💰 Staking</h3>
 <input id="stakeAmt" placeholder="Amount to stake">
-<div class="btn" onclick="stake()">Stake ALF</div>
-<div class="btn" onclick="unstake()">Unstake</div>
+<div class="btn" onclick="stake()">Start Mining</div>
+<div class="btn" onclick="unstake()">Stop</div>
+<div class="btn" onclick="claim()">Claim Reward</div>
+
 <h4>Staked: <span id="staked">0</span> ALF</h4>
 <h4>Reward: <span id="reward">0</span> ALF</h4>
 </div>
 
-<!-- SWAP -->
+<!-- REFERRAL -->
 <div class="box">
-<h3>🔁 Swap</h3>
-<input id="swapAmt" placeholder="Amount ALF">
-<div class="btn" onclick="swap()">Swap (Demo)</div>
-</div>
+<h3>👥 Referral</h3>
 
-<!-- ORDER -->
-<div class="box">
-<h3>📊 Order Book</h3>
+<input id="refLink" readonly>
 
-<input id="price" placeholder="Price">
-<input id="amount" placeholder="Amount">
+<h4>Total Referrals: <span id="refs">0</span></h4>
+<h4>Referral Reward: <span id="refReward">0</span> ALF</h4>
 
-<div class="btn" onclick="addOrder('BUY')">Buy</div>
-<div class="btn" onclick="addOrder('SELL')">Sell</div>
-
-<table>
-<tr><th>Type</th><th>Price</th><th>Amount</th></tr>
-<tbody id="orders"></tbody>
-</table>
-
+<div class="btn" onclick="copyRef()">Copy Link</div>
 </div>
 
 </div>
@@ -118,27 +95,23 @@ const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
 let provider, signer, user, contract;
 
-// ===== SIMPLE LOCAL STAKING =====
+// ===== STAKING =====
 let staked = 0;
 let reward = 0;
 let lastUpdate = Date.now();
+let miningActive = false;
+const RATE = 0.000002;
+
+// ===== REFERRAL =====
+let referrals = 0;
+let refReward = 0;
+let refUser = null;
 
 // ===== ABI =====
 const abi = [
 "function balanceOf(address) view returns(uint256)",
-"function decimals() view returns(uint8)",
-"function approve(address,uint256) returns(bool)"
+"function decimals() view returns(uint8)"
 ];
-
-// ================= NETWORK =================
-async function switchToBNB(){
-try{
-await window.ethereum.request({
-method:"wallet_switchEthereumChain",
-params:[{ chainId:"0x38" }]
-});
-}catch(e){}
-}
 
 // ================= CONNECT =================
 async function connect(){
@@ -155,8 +128,6 @@ method:"eth_requestAccounts"
 
 user = acc[0];
 
-await switchToBNB();
-
 provider = new ethers.providers.Web3Provider(window.ethereum);
 signer = provider.getSigner();
 
@@ -167,99 +138,109 @@ user.slice(0,6)+"..."+user.slice(-4);
 
 await loadBalance();
 
+// REF
+refUser = getRef();
+
+if(refUser && refUser !== user){
+referrals++;
+document.getElementById("refs").innerText = referrals;
+}
+
+generateRef();
+
 alert("Connected ✔");
 
 }catch(e){
 console.log(e);
-alert("Connection failed");
 }
 }
 
 // ================= BALANCE =================
 async function loadBalance(){
-try{
 let bal = await contract.balanceOf(user);
 let dec = await contract.decimals();
 
 document.getElementById("bal").innerText =
 parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
-
-}catch(e){
-console.log(e);
-}
 }
 
-// ================= STAKING =================
+// ================= MINING =================
 function updateReward(){
+
+if(!miningActive) return;
+
 let now = Date.now();
 let seconds = (now - lastUpdate)/1000;
 
-// 🔥 reward rate (edit hapa)
-reward += staked * 0.000001 * seconds;
+let gain = staked * RATE * seconds;
+
+reward += gain;
+
+// REF BONUS
+if(refUser){
+let bonus = gain * 0.05;
+refReward += bonus;
+
+document.getElementById("refReward").innerText =
+refReward.toFixed(4);
+}
 
 lastUpdate = now;
 
 document.getElementById("reward").innerText =
-reward.toFixed(4);
+reward.toFixed(6);
 }
 
 function stake(){
 
 let amt = parseFloat(document.getElementById("stakeAmt").value);
 
-if(!amt || amt <= 0){
-alert("Weka amount");
-return;
-}
-
-updateReward();
+if(!amt) return alert("Weka amount");
 
 staked += amt;
+miningActive = true;
+lastUpdate = Date.now();
 
 document.getElementById("staked").innerText = staked;
-alert("Staked ✔");
+
+alert("Mining Started 🚀");
 }
 
 function unstake(){
+updateReward();
+miningActive = false;
+alert("Stopped ✔");
+}
 
+function claim(){
 updateReward();
 
-alert("Unstaked + Reward ✔");
+alert("Claimed " + reward.toFixed(4) + " ALF 💰");
 
-staked = 0;
 reward = 0;
-
-document.getElementById("staked").innerText = 0;
 document.getElementById("reward").innerText = 0;
 }
 
-// ================= SWAP =================
-function swap(){
-alert("Next step: tutaconnect PancakeSwap 🔥");
+// ================= REF =================
+function getRef(){
+let params = new URLSearchParams(window.location.search);
+return params.get("ref");
 }
 
-// ================= ORDER =================
-function addOrder(type){
-
-let price = document.getElementById("price").value;
-let amount = document.getElementById("amount").value;
-
-if(!price || !amount){
-alert("Fill fields");
-return;
+function generateRef(){
+let link = window.location.href.split("?")[0] + "?ref=" + user;
+document.getElementById("refLink").value = link;
 }
 
-document.getElementById("orders").innerHTML += `
-<tr>
-<td>${type}</td>
-<td>${price}</td>
-<td>${amount}</td>
-</tr>
-`;
+function copyRef(){
+let input = document.getElementById("refLink");
+input.select();
+document.execCommand("copy");
+alert("Copied ✔");
 }
 
 // ================= AUTO =================
-setInterval(updateReward, 3000);
+setInterval(updateReward, 1000);
 
 </script>
 
