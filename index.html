@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Exchange PRO</title>
+<title>ALF Exchange + Staking</title>
 
 <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
@@ -68,33 +68,42 @@ font-size:12px;
 
 <div class="container">
 
+<!-- WALLET -->
 <div class="box">
 <h3>Wallet</h3>
 <div class="btn" onclick="connect()">Connect Wallet</div>
 <h4>Balance: <span id="bal">0</span> ALF</h4>
 </div>
 
+<!-- STAKING -->
 <div class="box">
-<h3>🔁 Swap (Demo)</h3>
-<input id="swapAmt" placeholder="Amount ALF">
-<div class="btn" onclick="swap()">Swap ALF ↔ BNB</div>
+<h3>💰 Staking</h3>
+<input id="stakeAmt" placeholder="Amount to stake">
+<div class="btn" onclick="stake()">Stake ALF</div>
+<div class="btn" onclick="unstake()">Unstake</div>
+<h4>Staked: <span id="staked">0</span> ALF</h4>
+<h4>Reward: <span id="reward">0</span> ALF</h4>
 </div>
 
+<!-- SWAP -->
+<div class="box">
+<h3>🔁 Swap</h3>
+<input id="swapAmt" placeholder="Amount ALF">
+<div class="btn" onclick="swap()">Swap (Demo)</div>
+</div>
+
+<!-- ORDER -->
 <div class="box">
 <h3>📊 Order Book</h3>
 
 <input id="price" placeholder="Price">
 <input id="amount" placeholder="Amount">
 
-<div class="btn" onclick="addOrder('BUY')">Buy Order</div>
-<div class="btn" onclick="addOrder('SELL')">Sell Order</div>
+<div class="btn" onclick="addOrder('BUY')">Buy</div>
+<div class="btn" onclick="addOrder('SELL')">Sell</div>
 
 <table>
-<tr>
-<th>Type</th>
-<th>Price</th>
-<th>Amount</th>
-</tr>
+<tr><th>Type</th><th>Price</th><th>Amount</th></tr>
 <tbody id="orders"></tbody>
 </table>
 
@@ -104,62 +113,34 @@ font-size:12px;
 
 <script>
 
-// =======================
-// SAFETY CHECK
-// =======================
-if(typeof ethers === "undefined"){
-alert("Ethers haijaload");
-throw new Error("ethers missing");
-}
-
-// ===== TOKEN (BEP20) =====
+// ===== CONFIG =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
-// ===== GLOBALS =====
 let provider, signer, user, contract;
 
-// ===== ERC20 ABI =====
+// ===== SIMPLE LOCAL STAKING =====
+let staked = 0;
+let reward = 0;
+let lastUpdate = Date.now();
+
+// ===== ABI =====
 const abi = [
 "function balanceOf(address) view returns(uint256)",
 "function decimals() view returns(uint8)",
-"function symbol() view returns(string)",
-"function name() view returns(string)"
+"function approve(address,uint256) returns(bool)"
 ];
 
-console.log("ALF Exchange FULL READY ✔");
-
-// =======================
-// NETWORK SWITCH
-// =======================
+// ================= NETWORK =================
 async function switchToBNB(){
 try{
 await window.ethereum.request({
 method:"wallet_switchEthereumChain",
 params:[{ chainId:"0x38" }]
 });
-}catch(e){
-if(e.code === 4902){
-await window.ethereum.request({
-method:"wallet_addEthereumChain",
-params:[{
-chainId:"0x38",
-chainName:"BNB Smart Chain",
-rpcUrls:["https://bsc-dataseed.binance.org/"],
-nativeCurrency:{
-name:"BNB",
-symbol:"BNB",
-decimals:18
-},
-blockExplorerUrls:["https://bscscan.com"]
-}]
-});
-}
-}
+}catch(e){}
 }
 
-// =======================
-// CONNECT WALLET
-// =======================
+// ================= CONNECT =================
 async function connect(){
 try{
 
@@ -168,11 +149,11 @@ alert("Install MetaMask");
 return;
 }
 
-const accounts = await window.ethereum.request({
+const acc = await window.ethereum.request({
 method:"eth_requestAccounts"
 });
 
-user = accounts[0];
+user = acc[0];
 
 await switchToBNB();
 
@@ -184,68 +165,87 @@ contract = new ethers.Contract(TOKEN, abi, signer);
 document.getElementById("addr").innerText =
 user.slice(0,6)+"..."+user.slice(-4);
 
-// TOKEN CHECK
-try{
-const symbol = await contract.symbol();
-console.log("TOKEN:", symbol);
-}catch(e){
-alert("Invalid BEP20 contract");
-}
-
 await loadBalance();
 
 alert("Connected ✔");
 
 }catch(e){
 console.log(e);
-alert(e.message);
+alert("Connection failed");
 }
 }
 
-// =======================
-// REAL BALANCE SAFE
-// =======================
+// ================= BALANCE =================
 async function loadBalance(){
 try{
-
-if(!contract) return;
-
-const bal = await contract.balanceOf(user);
-
-let decimals = 18;
-
-try{
-decimals = await contract.decimals();
-}catch(e){}
-
-const formatted = ethers.utils.formatUnits(bal, decimals);
+let bal = await contract.balanceOf(user);
+let dec = await contract.decimals();
 
 document.getElementById("bal").innerText =
-parseFloat(formatted).toLocaleString();
+parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
 
 }catch(e){
-console.log("Balance error:", e);
-document.getElementById("bal").innerText = "0";
+console.log(e);
 }
 }
 
-// =======================
-// SWAP DEMO
-// =======================
+// ================= STAKING =================
+function updateReward(){
+let now = Date.now();
+let seconds = (now - lastUpdate)/1000;
+
+// 🔥 reward rate (edit hapa)
+reward += staked * 0.000001 * seconds;
+
+lastUpdate = now;
+
+document.getElementById("reward").innerText =
+reward.toFixed(4);
+}
+
+function stake(){
+
+let amt = parseFloat(document.getElementById("stakeAmt").value);
+
+if(!amt || amt <= 0){
+alert("Weka amount");
+return;
+}
+
+updateReward();
+
+staked += amt;
+
+document.getElementById("staked").innerText = staked;
+alert("Staked ✔");
+}
+
+function unstake(){
+
+updateReward();
+
+alert("Unstaked + Reward ✔");
+
+staked = 0;
+reward = 0;
+
+document.getElementById("staked").innerText = 0;
+document.getElementById("reward").innerText = 0;
+}
+
+// ================= SWAP =================
 function swap(){
-alert("Swap bado demo 🔁 (next step: real PancakeSwap)");
+alert("Next step: tutaconnect PancakeSwap 🔥");
 }
 
-// =======================
-// ORDER BOOK UI
-// =======================
+// ================= ORDER =================
 function addOrder(type){
 
 let price = document.getElementById("price").value;
 let amount = document.getElementById("amount").value;
 
 if(!price || !amount){
-alert("Fill all fields");
+alert("Fill fields");
 return;
 }
 
@@ -258,20 +258,8 @@ document.getElementById("orders").innerHTML += `
 `;
 }
 
-// =======================
-// AUTO CONNECT
-// =======================
-window.onload = async () => {
-if(window.ethereum){
-const acc = await window.ethereum.request({
-method:"eth_accounts"
-});
-
-if(acc.length > 0){
-connect();
-}
-}
-};
+// ================= AUTO =================
+setInterval(updateReward, 3000);
 
 </script>
 
