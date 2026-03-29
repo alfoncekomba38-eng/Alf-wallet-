@@ -55,7 +55,7 @@ border:1px solid #ccc;
 
 <div class="container">
 
-<!-- WALLET PRO -->
+<!-- WALLET -->
 <div class="box">
 <h3>Wallet</h3>
 
@@ -69,6 +69,7 @@ border:1px solid #ccc;
 <div class="box">
 <h3>💰 Staking</h3>
 <input id="stakeAmt" placeholder="Amount to stake">
+
 <div class="btn" onclick="stake()">Start Mining</div>
 <div class="btn" onclick="unstake()">Stop</div>
 <div class="btn" onclick="claim()">Claim Reward</div>
@@ -107,10 +108,10 @@ let lastUpdate = Date.now();
 let miningActive = false;
 const RATE = 0.000002;
 
-// ===== REF =====
+// ===== REF PRO UPGRADE =====
 let referrals = 0;
 let refReward = 0;
-let refUser = null;
+let referredBy = null;
 
 // ===== ABI =====
 const abi = [
@@ -123,7 +124,7 @@ function isMetaMaskInstalled(){
 return typeof window.ethereum !== "undefined";
 }
 
-// ================= WALLET CONNECT PRO =================
+// ================= WALLET CONNECT =================
 async function connectWallet(){
 
 if(!isMetaMaskInstalled()){
@@ -151,12 +152,18 @@ document.getElementById("connectBtn").innerText = "Connected ✔";
 
 await loadBalance();
 
-// REF
-refUser = getRef();
+// ================= REF PRO LOGIC =================
+let ref = getRef();
 
-if(refUser && refUser !== user){
-referrals++;
+if(ref && ref !== user && !referredBy){
+
+referredBy = ref;
+referrals = 1;
+
 document.getElementById("refs").innerText = referrals;
+
+saveRef();
+
 }
 
 generateRef();
@@ -171,7 +178,7 @@ console.log(e);
 
 }
 
-// ================= INSTALL META MASK =================
+// ================= INSTALL =================
 function installMetaMask(){
 window.open("https://metamask.io/download/", "_blank");
 }
@@ -187,6 +194,7 @@ document.getElementById("walletStatus").innerText =
 
 // ================= AUTO CHECK =================
 window.onload = function(){
+loadRef();
 
 if(!isMetaMaskInstalled()){
 showInstall();
@@ -218,12 +226,16 @@ let gain = staked * RATE * seconds;
 
 reward += gain;
 
-if(refUser){
+if(referredBy){
+
 let bonus = gain * 0.05;
 refReward += bonus;
 
 document.getElementById("refReward").innerText =
 refReward.toFixed(6);
+
+saveRef();
+
 }
 
 lastUpdate = now;
@@ -262,7 +274,7 @@ reward = 0;
 document.getElementById("reward").innerText = 0;
 }
 
-// ================= REF =================
+// ================= REF FUNCTIONS =================
 function getRef(){
 let params = new URLSearchParams(window.location.search);
 return params.get("ref");
@@ -276,9 +288,7 @@ document.getElementById("refLink").value = link;
 }
 
 function copyRef(){
-let input = document.getElementById("refLink");
-input.select();
-document.execCommand("copy");
+navigator.clipboard.writeText(document.getElementById("refLink").value);
 alert("Copied ✔");
 }
 
@@ -293,9 +303,26 @@ text:"Join ALF and earn crypto 💰",
 url:link
 });
 }else{
-window.open("https://wa.me/?text="+encodeURIComponent(link), "_blank");
+navigator.clipboard.writeText(link);
+alert("Copied ✔ Paste manually WhatsApp");
 }
 
+}
+
+// ================= LOCAL STORAGE =================
+function saveRef(){
+localStorage.setItem("alf_refs", referrals);
+localStorage.setItem("alf_refReward", refReward);
+localStorage.setItem("alf_referredBy", referredBy || "");
+}
+
+function loadRef(){
+referrals = parseInt(localStorage.getItem("alf_refs")) || 0;
+refReward = parseFloat(localStorage.getItem("alf_refReward")) || 0;
+referredBy = localStorage.getItem("alf_referredBy") || null;
+
+document.getElementById("refs").innerText = referrals;
+document.getElementById("refReward").innerText = refReward.toFixed(6);
 }
 
 // ================= LOOP =================
