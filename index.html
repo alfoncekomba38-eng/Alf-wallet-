@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Exchange + Staking</title>
+<title>ALF Exchange + Staking PRO</title>
 
 <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
@@ -80,7 +80,7 @@ border:1px solid #ccc;
 
 <!-- REFERRAL -->
 <div class="box">
-<h3>👥 Referral</h3>
+<h3>👥 Referral PRO</h3>
 
 <input id="refLink" readonly>
 
@@ -96,35 +96,32 @@ border:1px solid #ccc;
 
 <script>
 
-// ===== CONFIG =====
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
 let provider, signer, user, contract;
 
-// ===== STAKING =====
 let staked = 0;
 let reward = 0;
 let lastUpdate = Date.now();
 let miningActive = false;
 const RATE = 0.000002;
 
-// ===== REF PRO UPGRADE =====
+// REF
 let referrals = 0;
 let refReward = 0;
 let referredBy = null;
 
-// ===== ABI =====
 const abi = [
 "function balanceOf(address) view returns(uint256)",
 "function decimals() view returns(uint8)"
 ];
 
-// ================= META MASK CHECK =================
+// CHECK META MASK
 function isMetaMaskInstalled(){
 return typeof window.ethereum !== "undefined";
 }
 
-// ================= WALLET CONNECT =================
+// CONNECT WALLET
 async function connectWallet(){
 
 if(!isMetaMaskInstalled()){
@@ -152,25 +149,17 @@ document.getElementById("connectBtn").innerText = "Connected ✔";
 
 await loadBalance();
 
-// ================= REF PRO LOGIC =================
 let ref = getRef();
 
-if(ref && ref !== user && !referredBy){
-
+if(ref && ref !== user){
 referredBy = ref;
 referrals = 1;
-
-document.getElementById("refs").innerText = referrals;
-
 saveRef();
-
 }
 
 generateRef();
 
-window.ethereum.on("accountsChanged", ()=>{
-location.reload();
-});
+window.ethereum.on("accountsChanged", ()=>location.reload());
 
 }catch(e){
 console.log(e);
@@ -178,12 +167,12 @@ console.log(e);
 
 }
 
-// ================= INSTALL =================
+// INSTALL META MASK
 function installMetaMask(){
 window.open("https://metamask.io/download/", "_blank");
 }
 
-// ================= SHOW INSTALL =================
+// SHOW INSTALL
 function showInstall(){
 document.getElementById("installBtn").style.display = "block";
 document.getElementById("connectBtn").style.display = "none";
@@ -192,20 +181,7 @@ document.getElementById("walletStatus").innerText =
 "⚠ MetaMask Not Installed";
 }
 
-// ================= AUTO CHECK =================
-window.onload = function(){
-loadRef();
-
-if(!isMetaMaskInstalled()){
-showInstall();
-}else{
-document.getElementById("walletStatus").innerText =
-"🔵 Ready to connect";
-}
-
-}
-
-// ================= BALANCE =================
+// LOAD BALANCE
 async function loadBalance(){
 let bal = await contract.balanceOf(user);
 let dec = await contract.decimals();
@@ -214,7 +190,7 @@ document.getElementById("bal").innerText =
 parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
 }
 
-// ================= STAKING =================
+// STAKING LOOP
 function updateReward(){
 
 if(!miningActive) return;
@@ -227,27 +203,19 @@ let gain = staked * RATE * seconds;
 reward += gain;
 
 if(referredBy){
-
 let bonus = gain * 0.05;
 refReward += bonus;
-
-document.getElementById("refReward").innerText =
-refReward.toFixed(6);
-
+document.getElementById("refReward").innerText = refReward.toFixed(6);
 saveRef();
-
 }
 
 lastUpdate = now;
 
-document.getElementById("reward").innerText =
-reward.toFixed(6);
+document.getElementById("reward").innerText = reward.toFixed(6);
 }
 
 function stake(){
-
 let amt = parseFloat(document.getElementById("stakeAmt").value);
-
 if(!amt) return alert("Weka amount");
 
 staked += amt;
@@ -274,7 +242,7 @@ reward = 0;
 document.getElementById("reward").innerText = 0;
 }
 
-// ================= REF FUNCTIONS =================
+// REF
 function getRef(){
 let params = new URLSearchParams(window.location.search);
 return params.get("ref");
@@ -304,12 +272,12 @@ url:link
 });
 }else{
 navigator.clipboard.writeText(link);
-alert("Copied ✔ Paste manually WhatsApp");
+alert("Copied ✔");
 }
 
 }
 
-// ================= LOCAL STORAGE =================
+// STORAGE
 function saveRef(){
 localStorage.setItem("alf_refs", referrals);
 localStorage.setItem("alf_refReward", refReward);
@@ -325,7 +293,15 @@ document.getElementById("refs").innerText = referrals;
 document.getElementById("refReward").innerText = refReward.toFixed(6);
 }
 
-// ================= LOOP =================
+// INIT
+window.onload = function(){
+loadRef();
+
+if(!isMetaMaskInstalled()){
+showInstall();
+}
+}
+
 setInterval(updateReward, 1000);
 
 </script>
