@@ -5,44 +5,15 @@
 <title>ALF Exchange + Staking PRO</title>
 
 <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#fff;color:#111}
-
-.top{
-padding:15px;
-background:#111;
-color:#fff;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
+.top{padding:15px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;}
 .container{padding:10px}
-
-.box{
-background:#f3f3f3;
-padding:15px;
-margin-bottom:10px;
-border-radius:10px;
-}
-
-.btn{
-padding:10px;
-background:#ddd;
-margin-top:8px;
-text-align:center;
-border-radius:8px;
-cursor:pointer;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-top:8px;
-border-radius:6px;
-border:1px solid #ccc;
-}
+.box{background:#f3f3f3;padding:15px;margin-bottom:10px;border-radius:10px;}
+.btn{padding:10px;background:#ddd;margin-top:8px;text-align:center;border-radius:8px;cursor:pointer;}
+input{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #ccc;}
 </style>
 </head>
 
@@ -55,42 +26,32 @@ border:1px solid #ccc;
 
 <div class="container">
 
-<!-- WALLET -->
 <div class="box">
 <h3>Wallet</h3>
-
-<div class="btn" id="connectBtn" onclick="connectWallet()">Connect Wallet</div>
-<div class="btn" id="openMM" onclick="openInMetaMask()">Open in MetaMask</div>
-<div class="btn" id="installBtn" onclick="installMetaMask()" style="display:none">Install MetaMask</div>
-
+<div class="btn" onclick="connectWallet()">Connect MetaMask</div>
+<div class="btn" onclick="connectWalletConnect()">Connect WalletConnect</div>
+<div class="btn" onclick="openInMetaMask()">Open in MetaMask</div>
+<div class="btn" onclick="installMetaMask()" id="installBtn" style="display:none">Install MetaMask</div>
 <h4>Balance: <span id="bal">0</span> ALF</h4>
 </div>
 
-<!-- STAKING -->
 <div class="box">
 <h3>💰 Staking</h3>
 <input id="stakeAmt" placeholder="Amount to stake">
-
 <div class="btn" onclick="stake()">Start Mining</div>
 <div class="btn" onclick="unstake()">Stop</div>
 <div class="btn" onclick="claim()">Claim Reward</div>
-
 <h4>Staked: <span id="staked">0</span> ALF</h4>
 <h4>Reward: <span id="reward">0</span> ALF</h4>
 </div>
 
-<!-- REFERRAL -->
 <div class="box">
 <h3>👥 Referral PRO</h3>
-
 <input id="refLink" readonly>
-
 <h4>Total Referrals: <span id="refs">0</span></h4>
 <h4>Referral Reward: <span id="refReward">0</span> ALF</h4>
-
-<div class="btn" onclick="copyRef()">📋 Copy Link</div>
-<div class="btn" onclick="shareRef()">📤 Share Link</div>
-
+<div class="btn" onclick="copyRef()">📋 Copy</div>
+<div class="btn" onclick="shareRef()">📤 Share</div>
 </div>
 
 </div>
@@ -99,43 +60,47 @@ border:1px solid #ccc;
 
 const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
 
-let provider, signer, user, contract;
+let provider, signer, user, contract, wcProvider;
 
-let staked = 0;
-let reward = 0;
-let lastUpdate = Date.now();
-let miningActive = false;
-const RATE = 0.000002;
+let staked=0, reward=0, lastUpdate=Date.now(), miningActive=false;
+let referrals=0, refReward=0, referredBy=null;
 
-let referrals = 0;
-let refReward = 0;
-let referredBy = null;
+const RATE=0.000002;
 
-const abi = [
+const abi=[
 "function balanceOf(address) view returns(uint256)",
 "function decimals() view returns(uint8)"
 ];
 
-// ✅ OPEN IN METAMASK FIX
-function openInMetaMask(){
-let url = window.location.href;
-window.location.href = "https://metamask.app.link/dapp/" + url.replace(/^https?:\/\//, "");
+// ================= WALLETCONNECT =================
+async function connectWalletConnect(){
+try{
+
+wcProvider = new WalletConnectProvider.default({
+rpc:{56:"https://bsc-dataseed.binance.org/"}
+});
+
+await wcProvider.enable();
+
+provider = new ethers.providers.Web3Provider(wcProvider);
+signer = provider.getSigner();
+user = await signer.getAddress();
+
+contract = new ethers.Contract(TOKEN, abi, signer);
+
+updateUI();
+
+}catch(e){
+alert("WalletConnect failed");
+}
 }
 
-// CHECK
-function isMetaMaskInstalled(){
-return typeof window.ethereum !== "undefined";
-}
-
-// CONNECT
+// ================= METAMASK =================
 async function connectWallet(){
-
-if(!isMetaMaskInstalled()){
+if(typeof window.ethereum==="undefined"){
 showInstall();
 return;
 }
-
-try{
 
 provider = new ethers.providers.Web3Provider(window.ethereum);
 await provider.send("eth_requestAccounts", []);
@@ -145,45 +110,46 @@ user = await signer.getAddress();
 
 contract = new ethers.Contract(TOKEN, abi, signer);
 
-document.getElementById("walletStatus").innerText =
-"🟢 " + user.slice(0,6)+"..."+user.slice(-4);
+updateUI();
+}
 
-document.getElementById("connectBtn").innerText = "Connected ✔";
+// ================= UI UPDATE =================
+async function updateUI(){
+document.getElementById("walletStatus").innerText =
+"🟢 "+user.slice(0,6)+"..."+user.slice(-4);
 
 await loadBalance();
 
-// REF
+// REF FIX
 let ref = getRef();
-if(ref && ref !== user){
+
+if(ref && ref!==user && !localStorage.getItem("ref_saved")){
 referredBy = ref;
 referrals = 1;
+
+localStorage.setItem("ref_saved","yes");
 saveRef();
 }
 
 generateRef();
-
-window.ethereum.on("accountsChanged", ()=>location.reload());
-
-}catch(e){
-alert("Connection failed");
-console.log(e);
-}
 }
 
-// INSTALL
+// ================= METAMASK OPEN =================
+function openInMetaMask(){
+let url = window.location.href;
+window.location.href="https://metamask.app.link/dapp/"+url.replace(/^https?:\/\//,"");
+}
+
+// ================= INSTALL =================
 function installMetaMask(){
-window.open("https://metamask.io/download/", "_blank");
+window.open("https://metamask.io/download/","_blank");
 }
 
 function showInstall(){
 document.getElementById("installBtn").style.display="block";
-document.getElementById("connectBtn").style.display="none";
-
-document.getElementById("walletStatus").innerText =
-"⚠ Install MetaMask";
 }
 
-// BALANCE
+// ================= BALANCE =================
 async function loadBalance(){
 let bal = await contract.balanceOf(user);
 let dec = await contract.decimals();
@@ -192,61 +158,60 @@ document.getElementById("bal").innerText =
 parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
 }
 
-// STAKING
+// ================= STAKING =================
 function updateReward(){
-
 if(!miningActive) return;
 
-let now = Date.now();
-let seconds = (now - lastUpdate)/1000;
+let now=Date.now();
+let gain=staked*RATE*((now-lastUpdate)/1000);
 
-let gain = staked * RATE * seconds;
-reward += gain;
+reward+=gain;
 
 if(referredBy){
-let bonus = gain * 0.05;
-refReward += bonus;
-document.getElementById("refReward").innerText = refReward.toFixed(6);
-saveRef();
+let bonus=gain*0.05;
+refReward+=bonus;
+document.getElementById("refReward").innerText=refReward.toFixed(6);
 }
 
-lastUpdate = now;
-
-document.getElementById("reward").innerText = reward.toFixed(6);
+lastUpdate=now;
+document.getElementById("reward").innerText=reward.toFixed(6);
 }
 
 function stake(){
-let amt = parseFloat(document.getElementById("stakeAmt").value);
+let amt=parseFloat(document.getElementById("stakeAmt").value);
 if(!amt) return alert("Weka amount");
 
-staked += amt;
-miningActive = true;
-lastUpdate = Date.now();
+staked+=amt;
+miningActive=true;
+lastUpdate=Date.now();
 
-document.getElementById("staked").innerText = staked;
+document.getElementById("staked").innerText=staked;
 }
 
 function unstake(){
 updateReward();
-miningActive = false;
+miningActive=false;
 }
 
 function claim(){
 updateReward();
-alert("Claimed "+reward.toFixed(4)+" ALF 💰");
-reward = 0;
-document.getElementById("reward").innerText = 0;
+alert("Claimed "+reward.toFixed(4)+" ALF");
+reward=0;
+document.getElementById("reward").innerText=0;
 }
 
-// REF
+// ================= REF =================
 function getRef(){
 return new URLSearchParams(window.location.search).get("ref");
 }
 
 function generateRef(){
 if(!user) return;
-let link = window.location.origin + window.location.pathname + "?ref=" + user;
-document.getElementById("refLink").value = link;
+
+let base = window.location.origin + window.location.pathname;
+let link = base+"?ref="+user;
+
+document.getElementById("refLink").value=link;
 }
 
 function copyRef(){
@@ -255,48 +220,38 @@ alert("Copied ✔");
 }
 
 function shareRef(){
-let link = document.getElementById("refLink").value;
+let link=document.getElementById("refLink").value;
 
 if(navigator.share){
-navigator.share({
-title:"ALF Exchange",
-text:"Join & earn 💰",
-url:link
-});
+navigator.share({title:"ALF",text:"Earn 💰",url:link});
 }else{
 navigator.clipboard.writeText(link);
-alert("Copied ✔ Paste manually");
+alert("Copied ✔");
 }
 }
 
-// STORAGE
+// ================= STORAGE =================
 function saveRef(){
-localStorage.setItem("alf_refs", referrals);
-localStorage.setItem("alf_refReward", refReward);
-localStorage.setItem("alf_referredBy", referredBy || "");
+localStorage.setItem("alf_refs",referrals);
+localStorage.setItem("alf_refReward",refReward);
+localStorage.setItem("alf_referredBy",referredBy||"");
 }
 
 function loadRef(){
-referrals = parseInt(localStorage.getItem("alf_refs")) || 0;
-refReward = parseFloat(localStorage.getItem("alf_refReward")) || 0;
-referredBy = localStorage.getItem("alf_referredBy") || null;
+referrals=parseInt(localStorage.getItem("alf_refs"))||0;
+refReward=parseFloat(localStorage.getItem("alf_refReward"))||0;
+referredBy=localStorage.getItem("alf_referredBy")||null;
 
-document.getElementById("refs").innerText = referrals;
-document.getElementById("refReward").innerText = refReward.toFixed(6);
+document.getElementById("refs").innerText=referrals;
+document.getElementById("refReward").innerText=refReward.toFixed(6);
 }
 
-// INIT
-window.onload = function(){
+// ================= INIT =================
+window.onload=()=>{
 loadRef();
+};
 
-if(!isMetaMaskInstalled()){
-showInstall();
-}else{
-document.getElementById("walletStatus").innerText = "🔵 Ready";
-}
-}
-
-setInterval(updateReward, 1000);
+setInterval(updateReward,1000);
 
 </script>
 
