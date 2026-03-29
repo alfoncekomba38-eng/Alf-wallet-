@@ -60,6 +60,7 @@ border:1px solid #ccc;
 <h3>Wallet</h3>
 
 <div class="btn" id="connectBtn" onclick="connectWallet()">Connect Wallet</div>
+<div class="btn" id="openMM" onclick="openInMetaMask()">Open in MetaMask</div>
 <div class="btn" id="installBtn" onclick="installMetaMask()" style="display:none">Install MetaMask</div>
 
 <h4>Balance: <span id="bal">0</span> ALF</h4>
@@ -106,7 +107,6 @@ let lastUpdate = Date.now();
 let miningActive = false;
 const RATE = 0.000002;
 
-// REF
 let referrals = 0;
 let refReward = 0;
 let referredBy = null;
@@ -116,12 +116,18 @@ const abi = [
 "function decimals() view returns(uint8)"
 ];
 
-// CHECK META MASK
+// ✅ OPEN IN METAMASK FIX
+function openInMetaMask(){
+let url = window.location.href;
+window.location.href = "https://metamask.app.link/dapp/" + url.replace(/^https?:\/\//, "");
+}
+
+// CHECK
 function isMetaMaskInstalled(){
 return typeof window.ethereum !== "undefined";
 }
 
-// CONNECT WALLET
+// CONNECT
 async function connectWallet(){
 
 if(!isMetaMaskInstalled()){
@@ -131,26 +137,23 @@ return;
 
 try{
 
-const acc = await window.ethereum.request({
-method:"eth_requestAccounts"
-});
-
-user = acc[0];
-
 provider = new ethers.providers.Web3Provider(window.ethereum);
+await provider.send("eth_requestAccounts", []);
+
 signer = provider.getSigner();
+user = await signer.getAddress();
 
 contract = new ethers.Contract(TOKEN, abi, signer);
 
 document.getElementById("walletStatus").innerText =
-"🟢 " + user.slice(0,6) + "..." + user.slice(-4);
+"🟢 " + user.slice(0,6)+"..."+user.slice(-4);
 
 document.getElementById("connectBtn").innerText = "Connected ✔";
 
 await loadBalance();
 
+// REF
 let ref = getRef();
-
 if(ref && ref !== user){
 referredBy = ref;
 referrals = 1;
@@ -162,26 +165,25 @@ generateRef();
 window.ethereum.on("accountsChanged", ()=>location.reload());
 
 }catch(e){
+alert("Connection failed");
 console.log(e);
 }
-
 }
 
-// INSTALL META MASK
+// INSTALL
 function installMetaMask(){
 window.open("https://metamask.io/download/", "_blank");
 }
 
-// SHOW INSTALL
 function showInstall(){
-document.getElementById("installBtn").style.display = "block";
-document.getElementById("connectBtn").style.display = "none";
+document.getElementById("installBtn").style.display="block";
+document.getElementById("connectBtn").style.display="none";
 
 document.getElementById("walletStatus").innerText =
-"⚠ MetaMask Not Installed";
+"⚠ Install MetaMask";
 }
 
-// LOAD BALANCE
+// BALANCE
 async function loadBalance(){
 let bal = await contract.balanceOf(user);
 let dec = await contract.decimals();
@@ -190,7 +192,7 @@ document.getElementById("bal").innerText =
 parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
 }
 
-// STAKING LOOP
+// STAKING
 function updateReward(){
 
 if(!miningActive) return;
@@ -199,7 +201,6 @@ let now = Date.now();
 let seconds = (now - lastUpdate)/1000;
 
 let gain = staked * RATE * seconds;
-
 reward += gain;
 
 if(referredBy){
@@ -223,34 +224,27 @@ miningActive = true;
 lastUpdate = Date.now();
 
 document.getElementById("staked").innerText = staked;
-
-alert("Mining Started 🚀");
 }
 
 function unstake(){
 updateReward();
 miningActive = false;
-alert("Stopped ✔");
 }
 
 function claim(){
 updateReward();
-
-alert("Claimed " + reward.toFixed(4) + " ALF 💰");
-
+alert("Claimed "+reward.toFixed(4)+" ALF 💰");
 reward = 0;
 document.getElementById("reward").innerText = 0;
 }
 
 // REF
 function getRef(){
-let params = new URLSearchParams(window.location.search);
-return params.get("ref");
+return new URLSearchParams(window.location.search).get("ref");
 }
 
 function generateRef(){
 if(!user) return;
-
 let link = window.location.origin + window.location.pathname + "?ref=" + user;
 document.getElementById("refLink").value = link;
 }
@@ -261,20 +255,18 @@ alert("Copied ✔");
 }
 
 function shareRef(){
-
 let link = document.getElementById("refLink").value;
 
 if(navigator.share){
 navigator.share({
 title:"ALF Exchange",
-text:"Join ALF and earn crypto 💰",
+text:"Join & earn 💰",
 url:link
 });
 }else{
 navigator.clipboard.writeText(link);
-alert("Copied ✔");
+alert("Copied ✔ Paste manually");
 }
-
 }
 
 // STORAGE
@@ -299,6 +291,8 @@ loadRef();
 
 if(!isMetaMaskInstalled()){
 showInstall();
+}else{
+document.getElementById("walletStatus").innerText = "🔵 Ready";
 }
 }
 
