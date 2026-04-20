@@ -2,257 +2,170 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Exchange + Staking PRO</title>
-
-<script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-<script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+<title>ALF Exchange</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#fff;color:#111}
-.top{padding:15px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;}
-.container{padding:10px}
-.box{background:#f3f3f3;padding:15px;margin-bottom:10px;border-radius:10px;}
-.btn{padding:10px;background:#ddd;margin-top:8px;text-align:center;border-radius:8px;cursor:pointer;}
-input{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #ccc;}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.swap-box{
+  width:90%;
+  max-width:400px;
+  background:#1e293b;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 0 20px rgba(0,0,0,0.3);
+}
+
+h2{
+  text-align:center;
+}
+
+button,input{
+  width:100%;
+  padding:15px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+}
+
+input{
+  background:#334155;
+  color:white;
+}
+
+button{
+  background:#16a34a;
+  color:white;
+  font-weight:bold;
+}
+
+button:hover{
+  opacity:0.9;
+}
+
+.status{
+  margin-top:10px;
+  text-align:center;
+  font-size:14px;
+}
+
+.quote{
+  margin-top:15px;
+  text-align:center;
+  color:#38bdf8;
+}
 </style>
 </head>
-
 <body>
 
-<div class="top">
-<div>💎 ALF Exchange</div>
-<div id="walletStatus">🔴 Not Connected</div>
-</div>
+<div class="swap-box">
+  <h2>ALF Exchange</h2>
 
-<div class="container">
+  <button onclick="connectWallet()">Connect MetaMask</button>
 
-<div class="box">
-<h3>Wallet</h3>
-<div class="btn" onclick="connectWallet()">Connect MetaMask</div>
-<div class="btn" onclick="connectWalletConnect()">Connect WalletConnect</div>
-<div class="btn" onclick="openInMetaMask()">Open in MetaMask</div>
-<div class="btn" onclick="installMetaMask()" id="installBtn" style="display:none">Install MetaMask</div>
-<h4>Balance: <span id="bal">0</span> ALF</h4>
-</div>
+  <input type="number" id="usdtAmount" placeholder="Enter USDT Amount">
 
-<div class="box">
-<h3>💰 Staking</h3>
-<input id="stakeAmt" placeholder="Amount to stake">
-<div class="btn" onclick="stake()">Start Mining</div>
-<div class="btn" onclick="unstake()">Stop</div>
-<div class="btn" onclick="claim()">Claim Reward</div>
-<h4>Staked: <span id="staked">0</span> ALF</h4>
-<h4>Reward: <span id="reward">0</span> ALF</h4>
-</div>
+  <button onclick="getQuote()">Get Quote</button>
 
-<div class="box">
-<h3>👥 Referral PRO</h3>
-<input id="refLink" readonly>
-<h4>Total Referrals: <span id="refs">0</span></h4>
-<h4>Referral Reward: <span id="refReward">0</span> ALF</h4>
-<div class="btn" onclick="copyRef()">📋 Copy</div>
-<div class="btn" onclick="shareRef()">📤 Share</div>
-</div>
+  <div class="quote" id="quote">You receive: 0 ALF</div>
 
+  <button onclick="swapUSDTtoALF()">Swap USDT → ALF</button>
+
+  <div class="status" id="status">Wallet not connected</div>
 </div>
 
 <script>
+let provider, signer, user;
 
-const TOKEN = "0xD42B0217bb40E53800384f624b62Dd7F8465d766";
+const USDT = "0x55d398326f99059fF775485246999027B3197955";
+const ALF = "0xEf9c435DC813d4839fdC4b4195C4B3E4F5d3D2F5";
+const ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 
-let provider, signer, user, contract, wcProvider;
-
-let staked=0, reward=0, lastUpdate=Date.now(), miningActive=false;
-let referrals=0, refReward=0, referredBy=null;
-
-const RATE=0.000002;
-
-const abi=[
-"function balanceOf(address) view returns(uint256)",
-"function decimals() view returns(uint8)"
+const routerABI = [
+ "function getAmountsOut(uint amountIn, address[] memory path) view returns (uint[] memory amounts)",
+ "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn,uint amountOutMin,address[] calldata path,address to,uint deadline) external"
 ];
 
-// ================= WALLETCONNECT =================
-async function connectWalletConnect(){
-try{
+const erc20ABI = [
+ "function approve(address spender,uint amount) external returns(bool)"
+];
 
-wcProvider = new WalletConnectProvider.default({
-rpc:{56:"https://bsc-dataseed.binance.org/"}
-});
-
-await wcProvider.enable();
-
-provider = new ethers.providers.Web3Provider(wcProvider);
-signer = provider.getSigner();
-user = await signer.getAddress();
-
-contract = new ethers.Contract(TOKEN, abi, signer);
-
-updateUI();
-
-}catch(e){
-alert("WalletConnect failed");
-}
-}
-
-// ================= METAMASK =================
 async function connectWallet(){
-if(typeof window.ethereum==="undefined"){
-showInstall();
-return;
+  if(!window.ethereum){
+    alert("Please install MetaMask");
+    return;
+  }
+
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = provider.getSigner();
+  user = await signer.getAddress();
+
+  document.getElementById("status").innerText =
+    "Connected: " + user.slice(0,6) + "..." + user.slice(-4);
 }
 
-provider = new ethers.providers.Web3Provider(window.ethereum);
-await provider.send("eth_requestAccounts", []);
+async function getQuote(){
+  try{
+    const amount = document.getElementById("usdtAmount").value;
+    const router = new ethers.Contract(ROUTER, routerABI, provider);
 
-signer = provider.getSigner();
-user = await signer.getAddress();
+    const amounts = await router.getAmountsOut(
+      ethers.utils.parseUnits(amount, 18),
+      [USDT, ALF]
+    );
 
-contract = new ethers.Contract(TOKEN, abi, signer);
+    const output = ethers.utils.formatUnits(amounts[1], 18);
 
-updateUI();
+    document.getElementById("quote").innerText =
+      "You receive: " + output + " ALF";
+
+  }catch(err){
+    console.log(err);
+    alert("Quote failed");
+  }
 }
 
-// ================= UI UPDATE =================
-async function updateUI(){
-document.getElementById("walletStatus").innerText =
-"🟢 "+user.slice(0,6)+"..."+user.slice(-4);
+async function swapUSDTtoALF(){
+  try{
+    const amount = document.getElementById("usdtAmount").value;
 
-await loadBalance();
+    const usdt = new ethers.Contract(USDT, erc20ABI, signer);
+    const router = new ethers.Contract(ROUTER, routerABI, signer);
 
-// REF FIX
-let ref = getRef();
+    const amountIn = ethers.utils.parseUnits(amount, 18);
 
-if(ref && ref!==user && !localStorage.getItem("ref_saved")){
-referredBy = ref;
-referrals = 1;
+    document.getElementById("status").innerText = "Approving USDT...";
+    await usdt.approve(ROUTER, amountIn);
 
-localStorage.setItem("ref_saved","yes");
-saveRef();
+    document.getElementById("status").innerText = "Swapping...";
+
+    await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      amountIn,
+      0,
+      [USDT, ALF],
+      user,
+      Math.floor(Date.now()/1000)+600
+    );
+
+    document.getElementById("status").innerText = "Swap successful!";
+
+  }catch(err){
+    console.log(err);
+    document.getElementById("status").innerText = "Swap failed";
+  }
 }
-
-generateRef();
-}
-
-// ================= METAMASK OPEN =================
-function openInMetaMask(){
-let url = window.location.href;
-window.location.href="https://metamask.app.link/dapp/"+url.replace(/^https?:\/\//,"");
-}
-
-// ================= INSTALL =================
-function installMetaMask(){
-window.open("https://metamask.io/download/","_blank");
-}
-
-function showInstall(){
-document.getElementById("installBtn").style.display="block";
-}
-
-// ================= BALANCE =================
-async function loadBalance(){
-let bal = await contract.balanceOf(user);
-let dec = await contract.decimals();
-
-document.getElementById("bal").innerText =
-parseFloat(ethers.utils.formatUnits(bal, dec)).toLocaleString();
-}
-
-// ================= STAKING =================
-function updateReward(){
-if(!miningActive) return;
-
-let now=Date.now();
-let gain=staked*RATE*((now-lastUpdate)/1000);
-
-reward+=gain;
-
-if(referredBy){
-let bonus=gain*0.05;
-refReward+=bonus;
-document.getElementById("refReward").innerText=refReward.toFixed(6);
-}
-
-lastUpdate=now;
-document.getElementById("reward").innerText=reward.toFixed(6);
-}
-
-function stake(){
-let amt=parseFloat(document.getElementById("stakeAmt").value);
-if(!amt) return alert("Weka amount");
-
-staked+=amt;
-miningActive=true;
-lastUpdate=Date.now();
-
-document.getElementById("staked").innerText=staked;
-}
-
-function unstake(){
-updateReward();
-miningActive=false;
-}
-
-function claim(){
-updateReward();
-alert("Claimed "+reward.toFixed(4)+" ALF");
-reward=0;
-document.getElementById("reward").innerText=0;
-}
-
-// ================= REF =================
-function getRef(){
-return new URLSearchParams(window.location.search).get("ref");
-}
-
-function generateRef(){
-if(!user) return;
-
-let base = window.location.origin + window.location.pathname;
-let link = base+"?ref="+user;
-
-document.getElementById("refLink").value=link;
-}
-
-function copyRef(){
-navigator.clipboard.writeText(document.getElementById("refLink").value);
-alert("Copied ✔");
-}
-
-function shareRef(){
-let link=document.getElementById("refLink").value;
-
-if(navigator.share){
-navigator.share({title:"ALF",text:"Earn 💰",url:link});
-}else{
-navigator.clipboard.writeText(link);
-alert("Copied ✔");
-}
-}
-
-// ================= STORAGE =================
-function saveRef(){
-localStorage.setItem("alf_refs",referrals);
-localStorage.setItem("alf_refReward",refReward);
-localStorage.setItem("alf_referredBy",referredBy||"");
-}
-
-function loadRef(){
-referrals=parseInt(localStorage.getItem("alf_refs"))||0;
-refReward=parseFloat(localStorage.getItem("alf_refReward"))||0;
-referredBy=localStorage.getItem("alf_referredBy")||null;
-
-document.getElementById("refs").innerText=referrals;
-document.getElementById("refReward").innerText=refReward.toFixed(6);
-}
-
-// ================= INIT =================
-window.onload=()=>{
-loadRef();
-};
-
-setInterval(updateReward,1000);
-
 </script>
 
 </body>
