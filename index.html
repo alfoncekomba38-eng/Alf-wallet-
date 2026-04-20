@@ -8,9 +8,9 @@
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial,sans-serif;
   background:#0f172a;
-  color:white;
+  color:#fff;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -42,11 +42,16 @@ button{
   color:white;
   font-weight:bold;
 }
+button:hover{
+  opacity:0.9;
+}
 .status,.quote{
   margin-top:15px;
   text-align:center;
 }
-.quote{color:#38bdf8;}
+.quote{
+  color:#38bdf8;
+}
 </style>
 </head>
 <body>
@@ -56,7 +61,7 @@ button{
 
   <button onclick="connectWallet()">Connect MetaMask</button>
 
-  <input type="number" id="usdtAmount" placeholder="Enter USDT Amount">
+  <input type="number" id="usdtAmount" placeholder="Enter USDT Amount" />
 
   <button onclick="getQuote()">Get Quote</button>
 
@@ -92,10 +97,31 @@ async function connectWallet(){
 
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: '0x38' }]
-    });
+    try{
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x38" }]
+      });
+    }catch(switchError){
+      if(switchError.code === 4902){
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: "0x38",
+            chainName: "Binance Smart Chain",
+            nativeCurrency: {
+              name: "BNB",
+              symbol: "BNB",
+              decimals: 18
+            },
+            rpcUrls: ["https://bsc-dataseed.binance.org/"],
+            blockExplorerUrls: ["https://bscscan.com"]
+          }]
+        });
+      } else {
+        throw switchError;
+      }
+    }
 
     await provider.send("eth_requestAccounts", []);
     signer = provider.getSigner();
@@ -118,17 +144,16 @@ async function getQuote(){
     }
 
     const amount = document.getElementById("usdtAmount").value;
-    if(!amount || amount <= 0){
-      alert("Enter amount");
+    if(!amount || Number(amount) <= 0){
+      alert("Enter valid amount");
       return;
     }
 
     const router = new ethers.Contract(ROUTER, routerABI, provider);
 
-    const amounts = await router.getAmountsOut(
-      ethers.utils.parseUnits(amount, 18),
-      [USDT, ALF]
-    );
+    const amountIn = ethers.utils.parseUnits(amount, 18);
+
+    const amounts = await router.getAmountsOut(amountIn, [USDT, ALF]);
 
     const output = ethers.utils.formatUnits(amounts[1], 18);
 
@@ -149,15 +174,15 @@ async function swapUSDTtoALF(){
     }
 
     const amount = document.getElementById("usdtAmount").value;
-    if(!amount || amount <= 0){
-      alert("Enter amount");
+    if(!amount || Number(amount) <= 0){
+      alert("Enter valid amount");
       return;
     }
 
+    const amountIn = ethers.utils.parseUnits(amount, 18);
+
     const usdt = new ethers.Contract(USDT, erc20ABI, signer);
     const router = new ethers.Contract(ROUTER, routerABI, signer);
-
-    const amountIn = ethers.utils.parseUnits(amount, 18);
 
     document.getElementById("status").innerText = "Approving USDT...";
     const approveTx = await usdt.approve(ROUTER, amountIn);
@@ -169,13 +194,13 @@ async function swapUSDTtoALF(){
       0,
       [USDT, ALF],
       user,
-      Math.floor(Date.now()/1000)+600
+      Math.floor(Date.now() / 1000) + 600
     );
 
     await swapTx.wait();
 
     document.getElementById("status").innerText = "Swap successful!";
-    getQuote();
+    await getQuote();
 
   }catch(err){
     console.log(err);
