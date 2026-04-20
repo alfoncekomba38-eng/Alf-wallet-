@@ -16,7 +16,6 @@ body{
   align-items:center;
   height:100vh;
 }
-
 .swap-box{
   width:90%;
   max-width:400px;
@@ -25,11 +24,7 @@ body{
   border-radius:20px;
   box-shadow:0 0 20px rgba(0,0,0,0.3);
 }
-
-h2{
-  text-align:center;
-}
-
+h2{text-align:center;}
 button,input{
   width:100%;
   padding:15px;
@@ -38,33 +33,20 @@ button,input{
   border-radius:12px;
   font-size:16px;
 }
-
 input{
   background:#334155;
   color:white;
 }
-
 button{
   background:#16a34a;
   color:white;
   font-weight:bold;
 }
-
-button:hover{
-  opacity:0.9;
-}
-
-.status{
-  margin-top:10px;
-  text-align:center;
-  font-size:14px;
-}
-
-.quote{
+.status,.quote{
   margin-top:15px;
   text-align:center;
-  color:#38bdf8;
 }
+.quote{color:#38bdf8;}
 </style>
 </head>
 <body>
@@ -102,23 +84,45 @@ const erc20ABI = [
 ];
 
 async function connectWallet(){
-  if(!window.ethereum){
-    alert("Please install MetaMask");
-    return;
+  try{
+    if(!window.ethereum){
+      alert("Please install MetaMask");
+      return;
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x38' }]
+    });
+
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    user = await signer.getAddress();
+
+    document.getElementById("status").innerText =
+      "Connected: " + user.slice(0,6) + "..." + user.slice(-4);
+
+  }catch(err){
+    console.log(err);
+    document.getElementById("status").innerText = "Wallet connection failed";
   }
-
-  provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  signer = provider.getSigner();
-  user = await signer.getAddress();
-
-  document.getElementById("status").innerText =
-    "Connected: " + user.slice(0,6) + "..." + user.slice(-4);
 }
 
 async function getQuote(){
   try{
+    if(!provider){
+      alert("Connect wallet first");
+      return;
+    }
+
     const amount = document.getElementById("usdtAmount").value;
+    if(!amount || amount <= 0){
+      alert("Enter amount");
+      return;
+    }
+
     const router = new ethers.Contract(ROUTER, routerABI, provider);
 
     const amounts = await router.getAmountsOut(
@@ -129,17 +133,26 @@ async function getQuote(){
     const output = ethers.utils.formatUnits(amounts[1], 18);
 
     document.getElementById("quote").innerText =
-      "You receive: " + output + " ALF";
+      "You receive: " + Number(output).toLocaleString() + " ALF";
 
   }catch(err){
     console.log(err);
-    alert("Quote failed");
+    document.getElementById("status").innerText = "Quote failed";
   }
 }
 
 async function swapUSDTtoALF(){
   try{
+    if(!signer){
+      alert("Connect wallet first");
+      return;
+    }
+
     const amount = document.getElementById("usdtAmount").value;
+    if(!amount || amount <= 0){
+      alert("Enter amount");
+      return;
+    }
 
     const usdt = new ethers.Contract(USDT, erc20ABI, signer);
     const router = new ethers.Contract(ROUTER, routerABI, signer);
@@ -147,11 +160,11 @@ async function swapUSDTtoALF(){
     const amountIn = ethers.utils.parseUnits(amount, 18);
 
     document.getElementById("status").innerText = "Approving USDT...";
-    await usdt.approve(ROUTER, amountIn);
+    const approveTx = await usdt.approve(ROUTER, amountIn);
+    await approveTx.wait();
 
     document.getElementById("status").innerText = "Swapping...";
-
-    await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    const swapTx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
       amountIn,
       0,
       [USDT, ALF],
@@ -159,7 +172,10 @@ async function swapUSDTtoALF(){
       Math.floor(Date.now()/1000)+600
     );
 
+    await swapTx.wait();
+
     document.getElementById("status").innerText = "Swap successful!";
+    getQuote();
 
   }catch(err){
     console.log(err);
