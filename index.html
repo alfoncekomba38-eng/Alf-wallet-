@@ -1,12 +1,119 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ALF Wallet</title>
-    <script type="module" src="/src/main.jsx"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALF Wallet Page</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+    .container {
+      max-width: 420px;
+      margin: auto;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .title {
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: #facc15;
+    }
+    .balance {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .wallet-address {
+      background: #334155;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .copy-btn {
+      background: #2563eb;
+      color: white;
+    }
+    .action-btn {
+      background: #facc15;
+      color: #111827;
+      font-weight: bold;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #1e293b;
+      padding: 12px 0;
+      border-top: 1px solid #334155;
+    }
+    .bottom-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="title">My ALF Wallet</div>
+      <div class="balance" id="balance">0 ALF</div>
+      <p>Wallet Address:</p>
+      <div class="wallet-address" id="walletAddress"></div>
+      <button class="btn copy-btn" onclick="copyAddress()">Copy Address</button>
+      <button class="btn action-btn">Deposit</button>
+      <button class="btn action-btn">Withdraw</button>
+    </div>
+  </div>  <div class="bottom-nav">
+    <a href="#">Home</a>
+    <a href="#">Earn</a>
+    <a href="#">Referral</a>
+    <a href="#">Wallet</a>
+  </div>  <script>
+    function generateWalletAddress() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let address = 'ALF-';
+      for (let i = 0; i < 16; i++) {
+        address += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return address;
+    }
+
+    let savedAddress = localStorage.getItem('alfWalletAddress');
+    if (!savedAddress) {
+      savedAddress = generateWalletAddress();
+      localStorage.setItem('alfWalletAddress', savedAddress);
+    }
+
+    document.getElementById('walletAddress').textContent = savedAddress;
+
+    function copyAddress() {
+      const address = document.getElementById('walletAddress').textContent;
+      navigator.clipboard.writeText(address);
+      alert('Wallet address copied: ' + address);
+    }
+  </script></body>
 </html>
