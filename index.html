@@ -1,61 +1,59 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ALF Wallet App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALF Wallet</title>
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
+      text-align: center;
     }
+
     .container {
-      max-width: 420px;
-      margin: auto;
       padding: 20px;
-      padding-bottom: 80px;
     }
+
     .card {
       background: #1e293b;
-      border-radius: 16px;
+      margin: 15px 0;
       padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
-    .title {
-      font-size: 22px;
-      margin-bottom: 15px;
-      color: #facc15;
-    }
+
     .balance {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: bold;
-      margin-bottom: 15px;
+      color: #22c55e;
     }
-    .wallet-address {
+
+    .address {
       background: #334155;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 8px;
       font-size: 14px;
       word-break: break-all;
-      margin-bottom: 10px;
     }
+
     .btn {
-      width: 100%;
-      padding: 12px;
+      margin: 8px;
+      padding: 10px 15px;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
+      border-radius: 8px;
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
       cursor: pointer;
-      margin-top: 10px;
     }
-    .copy-btn { background: #2563eb; color: white; }
-    .action-btn { background: #facc15; color: #111827; font-weight: bold; }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
-      left: 0;
       width: 100%;
       display: flex;
       justify-content: space-around;
@@ -63,103 +61,57 @@
       padding: 12px 0;
       border-top: 1px solid #334155;
     }
+
     .bottom-nav a {
       color: white;
       text-decoration: none;
       font-size: 14px;
     }
+
+    .reward {
+      color: #facc15;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="card">
-      <div class="title">My ALF Wallet</div>
-      <div class="balance" id="balance">0 ALF</div>
-      <p>Wallet Address:</p>
-      <div class="wallet-address" id="walletAddress"></div>
-      <button class="btn copy-btn" onclick="copyAddress()">Copy Address</button>
-      <button class="btn action-btn" onclick="deposit()">Deposit</button>
-      <button class="btn action-btn" onclick="withdraw()">Withdraw</button>
-    </div><div class="card">
-  <div class="title">Mining Status</div>
-  <p>Reward: 1 ALF every 24h</p>
-  <p id="timer">Next reward in: 24:00:00</p>
-</div>
+    <h1>My ALF Wallet</h1>
 
-  </div>  <div class="bottom-nav">
+    <div class="card">
+      <p>Wallet Balance</p>
+      <div class="balance" id="walletBalance">0 ALF</div>
+    </div>
+
+    <div class="card">
+      <p>Wallet Address:</p>
+      <div class="address" id="walletAddress">ALF-3TY0YDYQAZEJP92G</div>
+      <button class="btn" onclick="copyAddress()">Copy Address</button>
+      <button class="btn">Deposit</button>
+      <button class="btn">Withdraw</button>
+    </div>
+
+    <div class="card">
+      <h3>Mining Status</h3>
+      <p class="reward">Reward: 1 ALF every 24h</p>
+      <p>Next reward in: <span id="nextReward">24h 0m 0s</span></p>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
     <a href="home.html">Home</a>
     <a href="earn.html">Earn</a>
     <a href="referral.html">Referral</a>
     <a href="wallet.html">Wallet</a>
-  </div>  <script>
-    function generateWalletAddress() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let address = 'ALF-';
-      for (let i = 0; i < 16; i++) {
-        address += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return address;
-    }
+  </div>
 
-    let walletAddress = localStorage.getItem('alfWalletAddress');
-    if (!walletAddress) {
-      walletAddress = generateWalletAddress();
-      localStorage.setItem('alfWalletAddress', walletAddress);
-    }
-    document.getElementById('walletAddress').textContent = walletAddress;
-
-    let balance = parseFloat(localStorage.getItem('alfBalance')) || 0;
-    let lastReward = parseInt(localStorage.getItem('lastReward')) || Date.now();
-
-    function updateBalance() {
-      document.getElementById('balance').textContent = balance + ' ALF';
-      localStorage.setItem('alfBalance', balance);
-    }
-
+  <script src="mining.js"></script>
+  <script>
     function copyAddress() {
-      navigator.clipboard.writeText(walletAddress);
-      alert('Wallet address copied');
+      const address = document.getElementById("walletAddress").innerText;
+      navigator.clipboard.writeText(address);
+      alert("Wallet address copied!");
     }
-
-    function deposit() {
-      let amount = parseFloat(prompt('Enter deposit amount:'));
-      if (!isNaN(amount) && amount > 0) {
-        balance += amount;
-        updateBalance();
-      }
-    }
-
-    function withdraw() {
-      let amount = parseFloat(prompt('Enter withdraw amount:'));
-      if (!isNaN(amount) && amount > 0 && amount <= balance) {
-        balance -= amount;
-        updateBalance();
-      } else {
-        alert('Insufficient balance');
-      }
-    }
-
-    function updateMining() {
-      const now = Date.now();
-      const diff = now - lastReward;
-      const rewardInterval = 24 * 60 * 60 * 1000;
-
-      if (diff >= rewardInterval) {
-        balance += 1;
-        lastReward = now;
-        localStorage.setItem('lastReward', lastReward);
-        updateBalance();
-      }
-
-      let remaining = rewardInterval - (now - lastReward);
-      let hrs = Math.floor(remaining / (1000 * 60 * 60));
-      let mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      let secs = Math.floor((remaining % (1000 * 60)) / 1000);
-
-      document.getElementById('timer').textContent = `Next reward in: ${hrs}:${mins}:${secs}`;
-    }
-
-    updateBalance();
-    setInterval(updateMining, 1000);
-  </script></body>
+  </script>
+</body>
 </html>
