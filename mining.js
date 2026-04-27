@@ -1,60 +1,73 @@
-let balance = parseFloat(localStorage.getItem("alfBalance")) || 0;
-let lastMiningTime = parseInt(localStorage.getItem("lastMiningTime")) || 0;
-let miningActive = localStorage.getItem("miningActive") === "true";
+import { db } from "./firebase.js";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+const wallet = "ALF-3TY0YDYQAZEJP92G";
 const rewardPerDay = 1;
 const miningInterval = 24 * 60 * 60 * 1000;
 
-function startMining() {
-    if (!miningActive) {
-        miningActive = true;
-        lastMiningTime = Date.now();
+async function loadMining() {
+  const ref = doc(db, "miners", wallet);
+  const snap = await getDoc(ref);
 
-        localStorage.setItem("miningActive", true);
-        localStorage.setItem("lastMiningTime", lastMiningTime);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      balance: 0,
+      lastMining: Date.now(),
+      miningActive: false
+    });
+  }
 
-        document.getElementById("startMiningBtn").innerText = "Mining Active";
-        document.getElementById("startMiningBtn").disabled = true;
-    }
+  updateMining();
 }
 
-function updateMining() {
-    document.getElementById("walletBalance").innerText = balance.toFixed(2) + " ALF";
+async function startMining() {
+  const ref = doc(db, "miners", wallet);
 
-    if (miningActive) {
-        const now = Date.now();
-        const elapsed = now - lastMiningTime;
+  await updateDoc(ref, {
+    miningActive: true,
+    lastMining: Date.now()
+  });
 
-        if (elapsed >= miningInterval) {
-            balance += rewardPerDay;
-
-            localStorage.setItem("alfBalance", balance);
-
-            miningActive = false;
-            localStorage.setItem("miningActive", false);
-
-            document.getElementById("startMiningBtn").innerText = "Start Mining";
-            document.getElementById("startMiningBtn").disabled = false;
-            document.getElementById("nextReward").innerText = "Reward Ready!";
-            return;
-        }
-
-        const remaining = miningInterval - elapsed;
-        const hours = Math.floor(remaining / (1000 * 60 * 60));
-        const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((remaining % (1000 * 60)) / 1000);
-
-        document.getElementById("nextReward").innerText =
-            `${hours}h ${mins}m ${secs}s`;
-
-        document.getElementById("startMiningBtn").innerText = "Mining Active";
-        document.getElementById("startMiningBtn").disabled = true;
-    } else {
-        document.getElementById("nextReward").innerText = "Press Start Mining";
-        document.getElementById("startMiningBtn").innerText = "Start Mining";
-        document.getElementById("startMiningBtn").disabled = false;
-    }
+  updateMining();
 }
 
+async function updateMining() {
+  const ref = doc(db, "miners", wallet);
+  const snap = await getDoc(ref);
+
+  const data = snap.data();
+
+  document.getElementById("walletBalance").innerText =
+    data.balance.toFixed(2) + " ALF";
+
+  if (data.miningActive) {
+    const now = Date.now();
+    const elapsed = now - data.lastMining;
+
+    if (elapsed >= miningInterval) {
+      await updateDoc(ref, {
+        balance: data.balance + rewardPerDay,
+        miningActive: false
+      });
+
+      document.getElementById("nextReward").innerText = "Reward Added!";
+      return;
+    }
+
+    const remaining = miningInterval - elapsed;
+    const h = Math.floor(remaining / (1000 * 60 * 60));
+    const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((remaining % (1000 * 60)) / 1000);
+
+    document.getElementById("nextReward").innerText = `${h}h ${m}m ${s}s`;
+  }
+}
+
+window.startMining = startMining;
+loadMining();
 setInterval(updateMining, 1000);
-updateMining();
