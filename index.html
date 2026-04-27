@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALF Wallet</title>
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
       margin: 0;
@@ -51,6 +50,11 @@
       cursor: pointer;
     }
 
+    .btn:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -94,7 +98,8 @@
     <div class="card">
       <h3>Mining Status</h3>
       <p class="reward">Reward: 1 ALF every 24h</p>
-      <p>Next reward in: <span id="nextReward">24h 0m 0s</span></p>
+      <p>Next reward in: <span id="nextReward">Press Start Mining</span></p>
+      <button class="btn" id="startMiningBtn" onclick="startMining()">Start Mining</button>
     </div>
   </div>
 
@@ -105,13 +110,70 @@
     <a href="wallet.html">Wallet</a>
   </div>
 
-  <script src="mining.js"></script>
   <script>
+    let balance = parseFloat(localStorage.getItem("alfBalance")) || 0;
+    let lastMiningTime = parseInt(localStorage.getItem("lastMiningTime")) || 0;
+    let miningActive = localStorage.getItem("miningActive") === "true";
+
+    const rewardPerDay = 1;
+    const miningInterval = 24 * 60 * 60 * 1000;
+
     function copyAddress() {
       const address = document.getElementById("walletAddress").innerText;
       navigator.clipboard.writeText(address);
       alert("Wallet address copied!");
     }
+
+    function startMining() {
+      if (!miningActive) {
+        miningActive = true;
+        lastMiningTime = Date.now();
+
+        localStorage.setItem("miningActive", true);
+        localStorage.setItem("lastMiningTime", lastMiningTime);
+
+        document.getElementById("startMiningBtn").innerText = "Mining Active";
+        document.getElementById("startMiningBtn").disabled = true;
+      }
+    }
+
+    function updateMining() {
+      document.getElementById("walletBalance").innerText = balance.toFixed(2) + " ALF";
+
+      if (miningActive) {
+        const now = Date.now();
+        const elapsed = now - lastMiningTime;
+
+        if (elapsed >= miningInterval) {
+          balance += rewardPerDay;
+          localStorage.setItem("alfBalance", balance);
+
+          miningActive = false;
+          localStorage.setItem("miningActive", false);
+
+          document.getElementById("startMiningBtn").innerText = "Start Mining";
+          document.getElementById("startMiningBtn").disabled = false;
+          document.getElementById("nextReward").innerText = "Reward Ready!";
+          return;
+        }
+
+        const remaining = miningInterval - elapsed;
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+
+        document.getElementById("nextReward").innerText =
+          `${hours}h ${mins}m ${secs}s`;
+
+        document.getElementById("startMiningBtn").innerText = "Mining Active";
+        document.getElementById("startMiningBtn").disabled = true;
+      } else {
+        document.getElementById("nextReward").innerText = "Press Start Mining";
+      }
+    }
+
+    setInterval(updateMining, 1000);
+    updateMining();
   </script>
 </body>
 </html>
