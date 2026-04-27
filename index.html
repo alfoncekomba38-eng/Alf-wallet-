@@ -1,179 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALF Wallet</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALF Wallet</title>
 
-    .container {
-      padding: 20px;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
 
-    .card {
-      background: #1e293b;
-      margin: 15px 0;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
+.container { padding: 20px; }
 
-    .balance {
-      font-size: 32px;
-      font-weight: bold;
-      color: #22c55e;
-    }
+.card {
+  background: #1e293b;
+  margin: 15px 0;
+  padding: 20px;
+  border-radius: 15px;
+}
 
-    .address {
-      background: #334155;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 14px;
-      word-break: break-all;
-    }
+.balance {
+  font-size: 32px;
+  color: #22c55e;
+}
 
-    .btn {
-      margin: 8px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      background: #22c55e;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.btn {
+  margin: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: white;
+}
 
-    .btn:disabled {
-      background: gray;
-      cursor: not-allowed;
-    }
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background: #1e293b;
+  padding: 10px;
+}
+.bottom-nav a { color: white; text-decoration: none; }
+</style>
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
-      background: #1e293b;
-      padding: 12px 0;
-      border-top: 1px solid #334155;
-    }
-
-    .bottom-nav a {
-      color: white;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .reward {
-      color: #facc15;
-      font-size: 18px;
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>My ALF Wallet</h1>
 
-    <div class="card">
-      <p>Wallet Balance</p>
-      <div class="balance" id="walletBalance">0 ALF</div>
-    </div>
+<div class="container">
+  <h1>My ALF Wallet</h1>
 
-    <div class="card">
-      <p>Wallet Address:</p>
-      <div class="address" id="walletAddress">ALF-3TY0YDYQAZEJP92G</div>
-      <button class="btn" onclick="copyAddress()">Copy Address</button>
-      <button class="btn">Deposit</button>
-      <button class="btn">Withdraw</button>
-    </div>
-
-    <div class="card">
-      <h3>Mining Status</h3>
-      <p class="reward">Reward: 1 ALF every 24h</p>
-      <p>Next reward in: <span id="nextReward">Press Start Mining</span></p>
-      <button class="btn" id="startMiningBtn" onclick="startMining()">Start Mining</button>
-    </div>
+  <div class="card">
+    <p>Balance</p>
+    <div class="balance" id="balance">0 ALF</div>
   </div>
 
-  <div class="bottom-nav">
-    <a href="home.html">Home</a>
-    <a href="earn.html">Earn</a>
-    <a href="referral.html">Referral</a>
-    <a href="wallet.html">Wallet</a>
+  <div class="card">
+    <p>Wallet</p>
+    <div id="wallet">ALF-3TY0YDYQAZEJP92G</div>
+    <button class="btn" onclick="copy()">Copy</button>
   </div>
 
-  <script>
-    let balance = parseFloat(localStorage.getItem("alfBalance")) || 0;
-    let lastMiningTime = parseInt(localStorage.getItem("lastMiningTime")) || 0;
-    let miningActive = localStorage.getItem("miningActive") === "true";
+  <div class="card">
+    <p>Mining Status</p>
+    <p>Reward: 1 ALF / 24h</p>
+    <p id="timer">Loading...</p>
+    <button class="btn" onclick="startMining()" id="btn">Start Mining</button>
+  </div>
+</div>
 
-    const rewardPerDay = 1;
-    const miningInterval = 24 * 60 * 60 * 1000;
+<div class="bottom-nav">
+  <a href="#">Home</a>
+  <a href="#">Earn</a>
+  <a href="#">Referral</a>
+  <a href="#">Wallet</a>
+</div>
 
-    function copyAddress() {
-      const address = document.getElementById("walletAddress").innerText;
-      navigator.clipboard.writeText(address);
-      alert("Wallet address copied!");
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCBycKh2s1Z0CDdPaMhaYUcryc0jMuCo2U",
+  authDomain: "alf-wallet.firebaseapp.com",
+  projectId: "alf-wallet",
+  storageBucket: "alf-wallet.firebasestorage.app",
+  messagingSenderId: "451766153657",
+  appId: "1:451766153657:web:6276c12f129f3b890f0668"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const wallet = "ALF-3TY0YDYQAZEJP92G";
+const miningTime = 24 * 60 * 60 * 1000;
+
+let dataRef = doc(db, "miners", wallet);
+
+// INIT WALLET
+async function init() {
+  const snap = await getDoc(dataRef);
+  if (!snap.exists()) {
+    await setDoc(dataRef, {
+      balance: 0,
+      mining: false,
+      last: 0
+    });
+  }
+}
+await init();
+
+// COPY
+window.copy = function () {
+  navigator.clipboard.writeText(wallet);
+  alert("Copied!");
+};
+
+// START MINING
+window.startMining = async function () {
+  await updateDoc(dataRef, {
+    mining: true,
+    last: Date.now()
+  });
+};
+
+// UPDATE LOOP
+async function loop() {
+  const snap = await getDoc(dataRef);
+  let d = snap.data();
+
+  document.getElementById("balance").innerText = d.balance + " ALF";
+
+  if (d.mining) {
+    let now = Date.now();
+    let diff = now - d.last;
+
+    if (diff >= miningTime) {
+      await updateDoc(dataRef, {
+        balance: d.balance + 1,
+        mining: false
+      });
+    } else {
+      let r = miningTime - diff;
+      let h = Math.floor(r/3600000);
+      let m = Math.floor((r%3600000)/60000);
+      let s = Math.floor((r%60000)/1000);
+      document.getElementById("timer").innerText = `${h}h ${m}m ${s}s`;
     }
+  } else {
+    document.getElementById("timer").innerText = "Press Start Mining";
+  }
+}
 
-    function startMining() {
-      if (!miningActive) {
-        miningActive = true;
-        lastMiningTime = Date.now();
+setInterval(loop, 1000);
+</script>
 
-        localStorage.setItem("miningActive", true);
-        localStorage.setItem("lastMiningTime", lastMiningTime);
-
-        document.getElementById("startMiningBtn").innerText = "Mining Active";
-        document.getElementById("startMiningBtn").disabled = true;
-      }
-    }
-
-    function updateMining() {
-      document.getElementById("walletBalance").innerText = balance.toFixed(2) + " ALF";
-
-      if (miningActive) {
-        const now = Date.now();
-        const elapsed = now - lastMiningTime;
-
-        if (elapsed >= miningInterval) {
-          balance += rewardPerDay;
-          localStorage.setItem("alfBalance", balance);
-
-          miningActive = false;
-          localStorage.setItem("miningActive", false);
-
-          document.getElementById("startMiningBtn").innerText = "Start Mining";
-          document.getElementById("startMiningBtn").disabled = false;
-          document.getElementById("nextReward").innerText = "Reward Ready!";
-          return;
-        }
-
-        const remaining = miningInterval - elapsed;
-        const hours = Math.floor(remaining / (1000 * 60 * 60));
-        const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((remaining % (1000 * 60)) / 1000);
-
-        document.getElementById("nextReward").innerText =
-          `${hours}h ${mins}m ${secs}s`;
-
-        document.getElementById("startMiningBtn").innerText = "Mining Active";
-        document.getElementById("startMiningBtn").disabled = true;
-      } else {
-        document.getElementById("nextReward").innerText = "Press Start Mining";
-      }
-    }
-
-    setInterval(updateMining, 1000);
-    updateMining();
-  </script>
 </body>
 </html>
