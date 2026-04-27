@@ -1,61 +1,33 @@
-function getTime() {
-    return new Date().getTime();
-}
+// Load saved data
+let balance = parseFloat(localStorage.getItem("alfBalance")) || 0;
+let lastMiningTime = parseInt(localStorage.getItem("lastMiningTime")) || Date.now();
 
-// initialize user mining data
-function initMining() {
-    if (!localStorage.getItem("alf_balance")) {
-        localStorage.setItem("alf_balance", "0");
+const rewardPerDay = 1;
+const miningInterval = 24 * 60 * 60 * 1000; // 24 hours
+
+function updateMining() {
+    const now = Date.now();
+    const elapsed = now - lastMiningTime;
+
+    if (elapsed >= miningInterval) {
+        const rewards = Math.floor(elapsed / miningInterval);
+        balance += rewards * rewardPerDay;
+        lastMiningTime += rewards * miningInterval;
+
+        localStorage.setItem("alfBalance", balance);
+        localStorage.setItem("lastMiningTime", lastMiningTime);
     }
 
-    if (!localStorage.getItem("last_mine")) {
-        localStorage.setItem("last_mine", getTime());
-    }
+    document.getElementById("walletBalance").innerText = balance.toFixed(2) + " ALF";
+
+    const remaining = miningInterval - (now - lastMiningTime);
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+
+    document.getElementById("nextReward").innerText =
+        `${hours}h ${mins}m ${secs}s`;
 }
 
-// mining engine
-function miningEngine() {
-    let lastMine = parseInt(localStorage.getItem("last_mine"));
-    let now = getTime();
-
-    let diff = now - lastMine;
-
-    // 24 hours = 86400000 ms
-    if (diff >= 86400000) {
-
-        let balance = parseFloat(localStorage.getItem("alf_balance"));
-
-        balance += 1; // reward
-
-        localStorage.setItem("alf_balance", balance);
-        localStorage.setItem("last_mine", now);
-
-        console.log("Mining reward added +1 ALF");
-    }
-
-    updateUI();
-}
-
-// update UI
-function updateUI() {
-    let bal = localStorage.getItem("alf_balance") || 0;
-    document.getElementById("balance").innerText = bal + " ALF";
-
-    let last = parseInt(localStorage.getItem("last_mine"));
-    let now = getTime();
-
-    let remaining = 86400000 - (now - last);
-
-    if (remaining < 0) remaining = 0;
-
-    let hours = Math.floor(remaining / 3600000);
-    let minutes = Math.floor((remaining % 3600000) / 60000);
-
-    document.getElementById("mineTimer").innerText =
-        hours + "h " + minutes + "m";
-}
-
-// start system
-initMining();
-setInterval(miningEngine, 60000); // check kila dakika
-updateUI();
+setInterval(updateMining, 1000);
+updateMining();
