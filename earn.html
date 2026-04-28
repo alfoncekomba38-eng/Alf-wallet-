@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Earn ALF</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="card">
+  <h2>Mining</h2>
+  <button id="mineBtn">Start Mining</button>
+</div>
+
+<script type="module">
+import { db, auth } from './firebase.js';
+import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+document.getElementById("mineBtn").onclick = async () => {
+  const ref = doc(db, "users", auth.currentUser.uid);
+  await updateDoc(ref, {
+    miningStart: Date.now()
+  });
+  alert("Mining started");
+}
+</script>
+</body>
+</html>
