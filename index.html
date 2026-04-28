@@ -35,6 +35,7 @@ body {
   border-radius: 8px;
   background: #22c55e;
   color: white;
+  cursor: pointer;
 }
 
 .bottom-nav {
@@ -46,9 +47,12 @@ body {
   background: #1e293b;
   padding: 10px;
 }
-.bottom-nav a { color: white; text-decoration: none; }
-</style>
 
+.bottom-nav a {
+  color: white;
+  text-decoration: none;
+}
+</style>
 </head>
 <body>
 
@@ -63,14 +67,14 @@ body {
   <div class="card">
     <p>Wallet</p>
     <div id="wallet">ALF-3TY0YDYQAZEJP92G</div>
-    <button class="btn" onclick="copy()">Copy</button>
+    <button class="btn" onclick="copyWallet()">Copy</button>
   </div>
 
   <div class="card">
     <p>Mining Status</p>
     <p>Reward: 1 ALF / 24h</p>
     <p id="timer">Loading...</p>
-    <button class="btn" onclick="startMining()" id="btn">Start Mining</button>
+    <button class="btn" onclick="startMining()">Start Mining</button>
   </div>
 </div>
 
@@ -83,10 +87,15 @@ body {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase config
+// FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCBycKh2s1Z0CDdPaMhaYUcryc0jMuCo2U",
   authDomain: "alf-wallet.firebaseapp.com",
@@ -102,11 +111,12 @@ const db = getFirestore(app);
 const wallet = "ALF-3TY0YDYQAZEJP92G";
 const miningTime = 24 * 60 * 60 * 1000;
 
-let dataRef = doc(db, "miners", wallet);
+const dataRef = doc(db, "miners", wallet);
 
-// INIT WALLET
+// INIT
 async function init() {
   const snap = await getDoc(dataRef);
+
   if (!snap.exists()) {
     await setDoc(dataRef, {
       balance: 0,
@@ -115,12 +125,11 @@ async function init() {
     });
   }
 }
-await init();
 
 // COPY
-window.copy = function () {
+window.copyWallet = function () {
   navigator.clipboard.writeText(wallet);
-  alert("Copied!");
+  alert("Wallet copied!");
 };
 
 // START MINING
@@ -131,27 +140,30 @@ window.startMining = async function () {
   });
 };
 
-// UPDATE LOOP
+// LOOP
 async function loop() {
   const snap = await getDoc(dataRef);
-  let d = snap.data();
+  if (!snap.exists()) return;
+
+  const d = snap.data();
 
   document.getElementById("balance").innerText = d.balance + " ALF";
 
   if (d.mining) {
-    let now = Date.now();
-    let diff = now - d.last;
+    const diff = Date.now() - d.last;
 
     if (diff >= miningTime) {
       await updateDoc(dataRef, {
         balance: d.balance + 1,
         mining: false
       });
+      document.getElementById("timer").innerText = "Reward Added!";
     } else {
-      let r = miningTime - diff;
-      let h = Math.floor(r/3600000);
-      let m = Math.floor((r%3600000)/60000);
-      let s = Math.floor((r%60000)/1000);
+      const r = miningTime - diff;
+      const h = Math.floor(r / 3600000);
+      const m = Math.floor((r % 3600000) / 60000);
+      const s = Math.floor((r % 60000) / 1000);
+
       document.getElementById("timer").innerText = `${h}h ${m}m ${s}s`;
     }
   } else {
@@ -159,7 +171,11 @@ async function loop() {
   }
 }
 
-setInterval(loop, 1000);
+// START APP
+init().then(() => {
+  loop();
+  setInterval(loop, 1000);
+});
 </script>
 
 </body>
