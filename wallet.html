@@ -1,74 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My ALF Wallet</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ALF Wallet</title>
 </head>
-
 <body>
 
-<div class="card">
-  <h2>My ALF Wallet</h2>
+<h1>My ALF Wallet</h1>
 
-  <h3>Balance</h3>
-  <p id="balance">Loading...</p>
+<p>Balance: <span id="balance">0</span> ALF</p>
+<p>Wallet: <span id="wallet">Loading...</span></p>
+<p id="status">Loading...</p>
 
-  <h3>Wallet</h3>
-  <p id="wallet">Loading...</p>
-  <button onclick="copyWallet()">Copy</button>
-
-  <h3>Mining Status</h3>
-  <p>Reward: 1 ALF / 24h</p>
-  <p id="miningStatus">Loading...</p>
-
-  <button onclick="mine()">Start Mining</button>
-</div>
-
-<nav>
-  <a href="index.html">Home</a>
-  <a href="earn.html">Earn</a>
-  <a href="referral.html">Referral</a>
-  <a href="wallet.html">Wallet</a>
-</nav>
+<button onclick="mine()">Start Mining</button>
 
 <script>
-  // 🔥 LOAD DATA
-  let balance = localStorage.getItem("alf_balance");
-  if (!balance) balance = 0;
+  console.log("JS IS WORKING ✔");
 
-  let wallet = localStorage.getItem("alf_wallet");
-  if (!wallet) wallet = "ALF-" + Math.floor(Math.random() * 999999999);
+  let balance = localStorage.getItem("alf_balance") || 0;
+  let wallet = localStorage.getItem("alf_wallet") || "ALF-" + Math.floor(Math.random()*999999);
 
-  let lastMine = localStorage.getItem("alf_lastMine");
-
-  document.getElementById("balance").innerText = balance + " ALF";
+  document.getElementById("balance").innerText = balance;
   document.getElementById("wallet").innerText = wallet;
-  document.getElementById("miningStatus").innerText = "Ready";
+  document.getElementById("status").innerText = "Ready to mine";
 
-  // 💰 COPY WALLET
-  function copyWallet() {
-    navigator.clipboard.writeText(wallet);
-    alert("Wallet copied!");
-  }
-
-  // ⛏ MINING SYSTEM
   function mine() {
-    const now = Date.now();
-    const cooldown = 24 * 60 * 60 * 1000;
+    balance = Number(balance) + 1;
+    localStorage.setItem("alf_balance", balance);
 
-    if (!lastMine || now - lastMine >= cooldown) {
-      balance = Number(balance) + 1;
-      localStorage.setItem("alf_balance", balance);
-      localStorage.setItem("alf_lastMine", now);
-
-      document.getElementById("balance").innerText = balance + " ALF";
-      document.getElementById("miningStatus").innerText = "Mined +1 ALF";
-
-      alert("You earned 1 ALF");
-    } else {
-      document.getElementById("miningStatus").innerText = "Wait 24h to mine again";
-      alert("Cooldown active");
-    }
+    document.getElementById("balance").innerText = balance;
+    document.getElementById("status").innerText = "+1 ALF mined";
   }
 </script>
 
