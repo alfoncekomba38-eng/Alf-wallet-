@@ -1,164 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>ALF Wallet</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALF Wallet</title>
 
-    .card {
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      max-width: 350px;
-      margin: auto;
-    }
-
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
-      width: 90%;
-    }
-  </style>
-</head>
-<body>
-
-<div class="card">
-  <h1>My ALF Wallet</h1>
-
-  <p><b>Balance:</b> <span id="balance">Loading...</span></p>
-  <p><b>Wallet:</b> <span id="wallet">Loading...</span></p>
-  <p><b>Referral Code:</b> <span id="refCode">Loading...</span></p>
-  <p id="status">Loading...</p>
-
-  <button onclick="mine()">Start Mining</button>
-
-  <h3>Use Referral Code</h3>
-  <input type="text" id="refInput" placeholder="Enter referral code">
-  <button onclick="applyReferral()">Apply Referral</button>
-</div>
-
-<script type="module">
-import { auth, db } from "./firebase.js";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-auth.onAuthStateChanged(async (user) => {
-  if (!user) return;
-
-  const uid = user.uid;
-  const userRef = doc(db, "users", uid);
-  const snap = await getDoc(userRef);
-
-  if (!snap.exists()) {
-    const refCode = "ALF" + Math.floor(Math.random() * 100000);
-
-    await setDoc(userRef, {
-      balance: 0,
-      wallet: uid,
-      lastMine: 0,
-      refCode: refCode,
-      referredBy: "",
-      referrals: 0
-    });
-  }
-
-  loadWallet(uid);
-});
-
-async function loadWallet(uid) {
-  const snap = await getDoc(doc(db, "users", uid));
-  const data = snap.data();
-
-  document.getElementById("balance").innerText = data.balance + " ALF";
-  document.getElementById("wallet").innerText = data.wallet;
-  document.getElementById("refCode").innerText = data.refCode;
-  document.getElementById("status").innerText = "Ready";
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
 }
 
-window.mine = async function () {
-  const user = auth.currentUser;
-  if (!user) return;
+.container { padding: 20px; }
 
-  const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
-  const data = snap.data();
+.card {
+  background: #1e293b;
+  margin: 15px 0;
+  padding: 20px;
+  border-radius: 15px;
+}
 
-  const now = Date.now();
-  const cooldown = 24 * 60 * 60 * 1000;
+.balance {
+  font-size: 32px;
+  color: #22c55e;
+}
 
-  if (now - data.lastMine < cooldown) {
-    document.getElementById("status").innerText = "Wait 24h";
-    return;
-  }
+.btn {
+  margin: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
 
-  await updateDoc(userRef, {
-    balance: data.balance + 1,
-    lastMine: now
-  });
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background: #1e293b;
+  padding: 10px;
+}
 
-  loadWallet(user.uid);
-};
+.bottom-nav a {
+  color: white;
+  text-decoration: none;
+}
+</style>
+</head>
 
-window.applyReferral = async function () {
-  const user = auth.currentUser;
-  if (!user) return;
+<body>
 
-  const code = document.getElementById("refInput").value.trim();
-  if (!code) return;
+<div class="container">
+  <h1>My ALF Wallet</h1>
 
-  const myRef = doc(db, "users", user.uid);
-  const mySnap = await getDoc(myRef);
-  const myData = mySnap.data();
+  <div class="card">
+    <p>Balance</p>
+    <div class="balance" id="balance">0 ALF</div>
+  </div>
 
-  if (myData.referredBy) {
-    alert("Referral already used");
-    return;
-  }
+  <div class="card">
+    <p>Wallet</p>
+    <div id="wallet">Loading...</div>
+    <button class="btn" onclick="copyWallet()">Copy</button>
+  </div>
 
-  const q = query(collection(db, "users"), where("refCode", "==", code));
-  const results = await getDocs(q);
+  <div class="card">
+    <p>Mining Status</p>
+    <p>Reward: 1 ALF / 24h</p>
+    <p id="timer">Loading...</p>
+    <button class="btn" onclick="startMining()">Start Mining</button>
+  </div>
+</div>
 
-  if (results.empty) {
-    alert("Invalid referral code");
-    return;
-  }
+<div class="bottom-nav">
+  <a href="#">Home</a>
+  <a href="#">Earn</a>
+  <a href="#">Referral</a>
+  <a href="#">Wallet</a>
+</div>
 
-  const referrerDoc = results.docs[0];
-  const referrerData = referrerDoc.data();
-
-  if (referrerDoc.id === user.uid) {
-    alert("Cannot use your own code");
-    return;
-  }
-
-  // Reward referrer
-  await updateDoc(doc(db, "users", referrerDoc.id), {
-    balance: referrerData.balance + 2,
-    referrals: referrerData.referrals + 1
-  });
-
-  // Reward new user
-  await updateDoc(myRef, {
-    balance: myData.balance + 1,
-    referredBy: code
-  });
-
-  alert("Referral applied successfully");
-  loadWallet(user.uid);
-};
-</script>
+<script type="module" src="./app.js"></script>
 
 </body>
 </html>
