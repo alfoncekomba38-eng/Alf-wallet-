@@ -1,5 +1,4 @@
 import { auth, db } from "./firebase.js";
-import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -9,16 +8,10 @@ import {
 
 let currentUser = null;
 
-// USER LOGIN CHECK
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    document.getElementById("wallet").innerText = "Not logged in";
-    document.getElementById("timer").innerText = "Login required";
-    return;
-  }
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
 
   currentUser = user;
-
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
@@ -33,7 +26,6 @@ onAuthStateChanged(auth, async (user) => {
   loadWallet();
 });
 
-// LOAD WALLET
 async function loadWallet() {
   const userRef = doc(db, "users", currentUser.uid);
   const snap = await getDoc(userRef);
@@ -45,25 +37,22 @@ async function loadWallet() {
   updateTimer(data.lastMine);
 }
 
-// UPDATE TIMER
 function updateTimer(lastMine) {
-  const cooldown = 24 * 60 * 60 * 1000;
   const now = Date.now();
-  const remaining = cooldown - (now - lastMine);
+  const cooldown = 24 * 60 * 60 * 1000;
+  const diff = cooldown - (now - lastMine);
 
-  if (remaining <= 0) {
+  if (diff <= 0) {
     document.getElementById("timer").innerText = "Ready to mine";
     return;
   }
 
-  const hours = Math.floor(remaining / (1000 * 60 * 60));
-  document.getElementById("timer").innerText = `Wait ${hours}h`;
+  const hrs = Math.floor(diff / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  document.getElementById("timer").innerText = `${hrs}h ${mins}m left`;
 }
 
-// START MINING
 window.startMining = async function () {
-  if (!currentUser) return;
-
   const userRef = doc(db, "users", currentUser.uid);
   const snap = await getDoc(userRef);
   const data = snap.data();
@@ -72,7 +61,7 @@ window.startMining = async function () {
   const cooldown = 24 * 60 * 60 * 1000;
 
   if (now - data.lastMine < cooldown) {
-    updateTimer(data.lastMine);
+    alert("Mining not ready yet");
     return;
   }
 
@@ -84,9 +73,8 @@ window.startMining = async function () {
   loadWallet();
 };
 
-// COPY WALLET
-window.copyWallet = function () {
+window.copyWallet = async function () {
   const wallet = document.getElementById("wallet").innerText;
-  navigator.clipboard.writeText(wallet);
+  await navigator.clipboard.writeText(wallet);
   alert("Wallet copied");
 };
