@@ -1,82 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>ALF Wallet</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALF Wallet</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+.container { padding: 20px; }
+
+.card {
+  background: #1e293b;
+  margin: 15px 0;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.balance {
+  font-size: 32px;
+  color: #22c55e;
+}
+
+.btn {
+  margin: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background: #1e293b;
+  padding: 10px;
+}
+
+.bottom-nav a {
+  color: white;
+  text-decoration: none;
+}
+</style>
 </head>
+
 <body>
 
-<h1>My ALF Wallet</h1>
+<div class="container">
+  <h1>My ALF Wallet</h1>
 
-<p>Balance: <span id="balance">Loading...</span></p>
-<p>Wallet: <span id="wallet">Loading...</span></p>
-<p>Mining Status: <span id="status">Loading...</span></p>
+  <div class="card">
+    <p>Balance</p>
+    <div class="balance" id="balance">0 ALF</div>
+  </div>
 
-<button onclick="mine()">Start Mining</button>
+  <div class="card">
+    <p>Wallet</p>
+    <div id="wallet">Loading...</div>
+    <button class="btn" onclick="copyWallet()">Copy</button>
+  </div>
 
-<script type="module">
-import { auth, db } from "./firebase.js";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <div class="card">
+    <p>Mining Status</p>
+    <p>Reward: 1 ALF / 24h</p>
+    <p id="timer">Loading...</p>
+    <button class="btn" onclick="startMining()">Start Mining</button>
+  </div>
+</div>
 
-auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    document.getElementById("status").innerText = "Not logged in";
-    return;
-  }
+<div class="bottom-nav">
+  <a href="#">Home</a>
+  <a href="#">Earn</a>
+  <a href="#">Referral</a>
+  <a href="#">Wallet</a>
+</div>
 
-  const uid = user.uid;
-  const userRef = doc(db, "users", uid);
-  const userSnap = await getDoc(userRef);
-
-  if (!userSnap.exists()) {
-    await setDoc(userRef, {
-      balance: 0,
-      wallet: uid,
-      lastMine: 0
-    });
-  }
-
-  loadWallet(uid);
-});
-
-async function loadWallet(uid) {
-  const userRef = doc(db, "users", uid);
-  const snap = await getDoc(userRef);
-  const data = snap.data();
-
-  document.getElementById("balance").innerText = data.balance + " ALF";
-  document.getElementById("wallet").innerText = data.wallet;
-  document.getElementById("status").innerText = "Ready to mine";
-}
-
-window.mine = async function () {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
-  const data = snap.data();
-
-  const now = Date.now();
-  const cooldown = 24 * 60 * 60 * 1000;
-
-  if (now - data.lastMine < cooldown) {
-    document.getElementById("status").innerText = "Wait 24h";
-    return;
-  }
-
-  await updateDoc(userRef, {
-    balance: data.balance + 1,
-    lastMine: now
-  });
-
-  loadWallet(user.uid);
-}
-</script>
+<script type="module" src="./app.js"></script>
 
 </body>
 </html>
