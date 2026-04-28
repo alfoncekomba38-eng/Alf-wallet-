@@ -54,6 +54,7 @@ body {
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -66,7 +67,7 @@ body {
 
   <div class="card">
     <p>Wallet</p>
-    <div id="wallet">ALF-3TY0YDYQAZEJP92G</div>
+    <div id="wallet">Loading...</div>
     <button class="btn" onclick="copyWallet()">Copy</button>
   </div>
 
@@ -85,98 +86,7 @@ body {
   <a href="#">Wallet</a>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyCBycKh2s1Z0CDdPaMhaYUcryc0jMuCo2U",
-  authDomain: "alf-wallet.firebaseapp.com",
-  projectId: "alf-wallet",
-  storageBucket: "alf-wallet.firebasestorage.app",
-  messagingSenderId: "451766153657",
-  appId: "1:451766153657:web:6276c12f129f3b890f0668"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const wallet = "ALF-3TY0YDYQAZEJP92G";
-const miningTime = 24 * 60 * 60 * 1000;
-
-const dataRef = doc(db, "miners", wallet);
-
-// INIT
-async function init() {
-  const snap = await getDoc(dataRef);
-
-  if (!snap.exists()) {
-    await setDoc(dataRef, {
-      balance: 0,
-      mining: false,
-      last: 0
-    });
-  }
-}
-
-// COPY
-window.copyWallet = function () {
-  navigator.clipboard.writeText(wallet);
-  alert("Wallet copied!");
-};
-
-// START MINING
-window.startMining = async function () {
-  await updateDoc(dataRef, {
-    mining: true,
-    last: Date.now()
-  });
-};
-
-// LOOP
-async function loop() {
-  const snap = await getDoc(dataRef);
-  if (!snap.exists()) return;
-
-  const d = snap.data();
-
-  document.getElementById("balance").innerText = d.balance + " ALF";
-
-  if (d.mining) {
-    const diff = Date.now() - d.last;
-
-    if (diff >= miningTime) {
-      await updateDoc(dataRef, {
-        balance: d.balance + 1,
-        mining: false
-      });
-      document.getElementById("timer").innerText = "Reward Added!";
-    } else {
-      const r = miningTime - diff;
-      const h = Math.floor(r / 3600000);
-      const m = Math.floor((r % 3600000) / 60000);
-      const s = Math.floor((r % 60000) / 1000);
-
-      document.getElementById("timer").innerText = `${h}h ${m}m ${s}s`;
-    }
-  } else {
-    document.getElementById("timer").innerText = "Press Start Mining";
-  }
-}
-
-// START APP
-init().then(() => {
-  loop();
-  setInterval(loop, 1000);
-});
-</script>
+<script type="module" src="./app.js"></script>
 
 </body>
 </html>
