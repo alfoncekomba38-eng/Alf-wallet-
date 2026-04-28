@@ -2,14 +2,16 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// 🔥 YOUR FIREBASE CONFIG (weka real values zako hapa)
+// 🔥 YOUR REAL CONFIG (from Firebase)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyCBycKh2s1Z0CDdPaMhaYUcryc0jMuCo2U",
   authDomain: "alf-wallet.firebaseapp.com",
+  databaseURL: "https://alf-wallet-default-rtdb.firebaseio.com",
   projectId: "alf-wallet",
-  storageBucket: "alf-wallet.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  storageBucket: "alf-wallet.firebasestorage.app",
+  messagingSenderId: "451766153657",
+  appId: "1:451766153657:web:6276c12f129f3b890f0668",
+  measurementId: "G-H4GKSK1CZT"
 };
 
 // Initialize Firebase
@@ -21,20 +23,20 @@ const auth = getAuth(app);
 // Firestore
 const db = getFirestore(app);
 
-// 🔥 AUTO SIGN-IN (Anonymous user)
+// 🔥 AUTO LOGIN
 signInAnonymously(auth)
   .then(() => {
-    console.log("User signed in anonymously ✔");
+    console.log("Anonymous login success ✔");
   })
   .catch((error) => {
     console.error("Auth error:", error);
   });
 
-// 🔥 LISTEN USER STATE
+// 🔥 USER STATE LISTENER
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("User ready:", user.uid);
-    localStorage.setItem("alf_user", user.uid);
+    console.log("User UID:", user.uid);
+    localStorage.setItem("alf_uid", user.uid);
   } else {
     console.log("No user logged in");
   }
