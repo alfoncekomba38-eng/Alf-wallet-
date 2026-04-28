@@ -2,34 +2,95 @@
 <html>
 <head>
   <title>ALF Wallet</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    .card { padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 300px; margin: auto; }
+    button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+  </style>
 </head>
+
 <body>
 
-<h1>My ALF Wallet</h1>
+<div class="card">
+  <h1>My ALF Wallet</h1>
 
-<p>Balance: <span id="balance">0</span> ALF</p>
-<p>Wallet: <span id="wallet">Loading...</span></p>
-<p id="status">Loading...</p>
+  <h3>Balance</h3>
+  <p id="balance">Loading...</p>
 
-<button onclick="mine()">Start Mining</button>
+  <h3>Wallet</h3>
+  <p id="wallet">Loading...</p>
 
-<script>
-  console.log("JS IS WORKING ✔");
+  <h3>Mining Status</h3>
+  <p id="status">Loading...</p>
 
-  let balance = localStorage.getItem("alf_balance") || 0;
-  let wallet = localStorage.getItem("alf_wallet") || "ALF-" + Math.floor(Math.random()*999999);
+  <button onclick="mine()">Start Mining</button>
+</div>
 
-  document.getElementById("balance").innerText = balance;
-  document.getElementById("wallet").innerText = wallet;
-  document.getElementById("status").innerText = "Ready to mine";
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  function mine() {
-    balance = Number(balance) + 1;
-    localStorage.setItem("alf_balance", balance);
-
-    document.getElementById("balance").innerText = balance;
-    document.getElementById("status").innerText = "+1 ALF mined";
+// 🔥 AUTH STATE
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    document.getElementById("wallet").innerText = "Not logged in";
+    return;
   }
+
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  // create user if not exists
+  if (!snap.exists()) {
+    await setDoc(userRef, {
+      balance: 0,
+      wallet: user.uid,
+      lastMine: 0
+    });
+  }
+
+  loadUser(user.uid);
+});
+
+// 🔥 LOAD USER DATA
+async function loadUser(uid) {
+  const userRef = doc(db, "users", uid);
+  const snap = await getDoc(userRef);
+
+  const data = snap.data();
+
+  document.getElementById("balance").innerText = data.balance + " ALF";
+  document.getElementById("wallet").innerText = data.wallet;
+  document.getElementById("status").innerText = "Ready to mine";
+}
+
+// 🔥 MINE FUNCTION
+window.mine = async function () {
+  const user = auth.currentUser;
+  if (!user) return alert("Login first");
+
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  const data = snap.data();
+  const now = Date.now();
+  const cooldown = 24 * 60 * 60 * 1000;
+
+  if (now - data.lastMine < cooldown) {
+    document.getElementById("status").innerText = "Wait 24h";
+    return;
+  }
+
+  const newBalance = data.balance + 1;
+
+  await updateDoc(userRef, {
+    balance: newBalance,
+    lastMine: now
+  });
+
+  document.getElementById("balance").innerText = newBalance + " ALF";
+  document.getElementById("status").innerText = "+1 ALF mined ✔";
+};
 </script>
 
 </body>
