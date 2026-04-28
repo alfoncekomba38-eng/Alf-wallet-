@@ -3,12 +3,27 @@
 <head>
   <title>ALF Wallet</title>
   <style>
-    body { font-family: Arial; text-align: center; padding: 20px; }
-    .card { padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 300px; margin: auto; }
-    button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .card {
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      max-width: 350px;
+      margin: auto;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
-
 <body>
 
 <div class="card">
@@ -28,34 +43,42 @@
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// 🔥 AUTH STATE
+// LOAD USER
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    document.getElementById("wallet").innerText = "Not logged in";
+    document.getElementById("status").innerText = "User not logged in";
     return;
   }
 
-  const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
+  const uid = user.uid;
+  const userRef = doc(db, "users", uid);
+  const userSnap = await getDoc(userRef);
 
-  // create user if not exists
-  if (!snap.exists()) {
+  // create user document first time
+  if (!userSnap.exists()) {
     await setDoc(userRef, {
       balance: 0,
-      wallet: user.uid,
-      lastMine: 0
+      lastMine: 0,
+      wallet: uid
     });
   }
 
-  loadUser(user.uid);
+  loadWallet(uid);
 });
 
-// 🔥 LOAD USER DATA
-async function loadUser(uid) {
+// LOAD WALLET DATA
+async function loadWallet(uid) {
   const userRef = doc(db, "users", uid);
   const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return;
 
   const data = snap.data();
 
@@ -64,20 +87,31 @@ async function loadUser(uid) {
   document.getElementById("status").innerText = "Ready to mine";
 }
 
-// 🔥 MINE FUNCTION
+// MINE FUNCTION
 window.mine = async function () {
   const user = auth.currentUser;
-  if (!user) return alert("Login first");
 
-  const userRef = doc(db, "users", user.uid);
+  if (!user) {
+    alert("Login required");
+    return;
+  }
+
+  const uid = user.uid;
+  const userRef = doc(db, "users", uid);
   const snap = await getDoc(userRef);
 
   const data = snap.data();
+
   const now = Date.now();
-  const cooldown = 24 * 60 * 60 * 1000;
+  const cooldown = 24 * 60 * 60 * 1000; // 24h
 
   if (now - data.lastMine < cooldown) {
-    document.getElementById("status").innerText = "Wait 24h";
+    const remaining = cooldown - (now - data.lastMine);
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+
+    document.getElementById("status").innerText =
+      `Wait ${hours}h before next mining`;
+
     return;
   }
 
