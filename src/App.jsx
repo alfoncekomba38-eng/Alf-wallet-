@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react'
 
 export default function App() {
-  const [balance, setBalance] = useState(() => {
-    return Number(localStorage.getItem("alf_balance")) || 0
-  })
+  const [balance, setBalance] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(0)
 
-  const [timeLeft, setTimeLeft] = useState(() => {
-    return Number(localStorage.getItem("alf_time")) || 86400
-  })
-
-  const reward = 1
+  const userId = "user123" // replace with Firebase auth user
 
   useEffect(() => {
-    localStorage.setItem("alf_balance", balance)
-  }, [balance])
-
-  useEffect(() => {
-    localStorage.setItem("alf_time", timeLeft)
-  }, [timeLeft])
+    fetch(`http://localhost:3000/user/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setBalance(data.balance)
+        setTimeLeft(data.remainingTime)
+      })
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -27,13 +23,22 @@ export default function App() {
     return () => clearInterval(timer)
   }, [])
 
-  function claimMining() {
-    if (timeLeft === 0) {
-      setBalance(prev => prev + reward)
+  async function claimMining() {
+    const res = await fetch("http://localhost:3000/mine", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    })
+
+    const data = await res.json()
+
+    alert(data.message)
+
+    if (data.success) {
+      setBalance(data.balance)
       setTimeLeft(86400)
-      alert("You earned 1 ALF")
-    } else {
-      alert("Mining not ready yet")
     }
   }
 
@@ -55,7 +60,7 @@ export default function App() {
 
       <div className="card">
         <h2>Mining Reward</h2>
-        <p>{reward} ALF every 24h</p>
+        <p>1 ALF every 24h</p>
         <p>Next claim in: {formatTime(timeLeft)}</p>
         <button onClick={claimMining}>⛏ Claim Mining Reward</button>
       </div>
