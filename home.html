@@ -5,10 +5,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="card">
   <h1>ALF Wallet</h1>
   <h2 id="balance">0 ALF</h2>
-  <p id="walletAddress"></p>
+  <p id="walletAddress">Loading...</p>
 </div>
 
 <div class="nav">
@@ -20,26 +21,33 @@
 <script type="module">
 import { db, auth } from './firebase.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const uid = auth.currentUser.uid;
-const ref = doc(db, "users", uid);
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
 
-let snap = await getDoc(ref);
+  const uid = user.uid;
+  const ref = doc(db, "users", uid);
 
-if (!snap.exists()) {
-  await setDoc(ref, {
-    balance: 0,
-    miningStart: 0,
-    referrals: 0,
-    wallet: "ALF-" + uid.substring(0,8)
-  });
-  snap = await getDoc(ref);
-}
+  let snap = await getDoc(ref);
 
-const data = snap.data();
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      balance: 0,
+      miningStart: 0,
+      referrals: 0,
+      wallet: "ALF-" + uid.substring(0, 8)
+    });
 
-document.getElementById("balance").innerText = data.balance + " ALF";
-document.getElementById("walletAddress").innerText = data.wallet;
+    snap = await getDoc(ref);
+  }
+
+  const data = snap.data();
+
+  document.getElementById("balance").innerText = data.balance + " ALF";
+  document.getElementById("walletAddress").innerText = data.wallet;
+});
 </script>
+
 </body>
 </html>
