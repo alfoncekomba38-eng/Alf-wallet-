@@ -1,0 +1,58 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+const db = require("./admin");
+
+const app = express();
+app.use(bodyParser.json());
+
+const MINING_REWARD = 10; // ALF per mine
+const COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours
+
+app.post("/mine", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.json({ success: false, message: "User ID required" });
+  }
+
+  const userRef = db.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists) {
+    return res.json({ success: false, message: "User not found" });
+  }
+
+  const user = userSnap.data();
+  const now = Date.now();
+
+  const lastMine = user.lastMineTime || 0;
+
+  // Check cooldown
+  if (now - lastMine < COOLDOWN) {
+    const remaining = COOLDOWN - (now - lastMine);
+    return res.json({
+      success: false,
+      message: "Wait before next mine",
+      remainingTime: remaining,
+    });
+  }
+
+  // Update balance
+  const newBalance = (user.balance || 0) + MINING_REWARD;
+
+  await userRef.update({
+    balance: newBalance,
+    lastMineTime: now,
+  });
+
+  return res.json({
+    success: true,
+    message: "Mining successful",
+    reward: MINING_REWARD,
+    balance: newBalance,
+  });
+});
+
+app.listen(3000, () => {
+  console.log("ALF Mining server running on port 3000");
+});
