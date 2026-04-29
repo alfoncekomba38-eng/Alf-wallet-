@@ -1,4 +1,10 @@
 import { auth, db } from "./firebase.js";
+
+import {
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   doc,
   getDoc,
@@ -7,6 +13,33 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let currentUser = null;
+
+/* 🔐 GOOGLE LOGIN */
+window.loginWithGoogle = async function () {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+
+    currentUser = result.user;
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        balance: 0,
+        wallet: currentUser.uid,
+        lastMine: 0
+      });
+    }
+
+    loadWallet();
+
+  } catch (error) {
+    console.error(error);
+    alert("Login failed");
+  }
+};
 
 /* 🔐 AUTH CHECK */
 auth.onAuthStateChanged(async (user) => {
@@ -17,7 +50,6 @@ auth.onAuthStateChanged(async (user) => {
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
-  // 🧠 create user ikiwa haipo
   if (!snap.exists()) {
     await setDoc(userRef, {
       balance: 0,
@@ -46,7 +78,7 @@ async function loadWallet() {
   updateTimer(data.lastMine);
 }
 
-/* ⏳ MINING TIMER */
+/* ⏳ TIMER */
 function updateTimer(lastMine = 0) {
   const now = Date.now();
   const cooldown = 24 * 60 * 60 * 1000;
@@ -64,9 +96,12 @@ function updateTimer(lastMine = 0) {
     `${hrs}h ${mins}m left`;
 }
 
-/* ⛏️ MINING */
+/* ⛏️ START MINING */
 window.startMining = async function () {
-  if (!currentUser) return;
+  if (!currentUser) {
+    alert("Login first");
+    return;
+  }
 
   const userRef = doc(db, "users", currentUser.uid);
   const snap = await getDoc(userRef);
