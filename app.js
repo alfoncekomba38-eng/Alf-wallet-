@@ -8,13 +8,16 @@ import {
 
 let currentUser = null;
 
+/* 🔐 AUTH CHECK */
 auth.onAuthStateChanged(async (user) => {
   if (!user) return;
 
   currentUser = user;
+
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
+  // 🧠 create user ikiwa haipo
   if (!snap.exists()) {
     await setDoc(userRef, {
       balance: 0,
@@ -26,9 +29,15 @@ auth.onAuthStateChanged(async (user) => {
   loadWallet();
 });
 
+/* 📊 LOAD WALLET */
 async function loadWallet() {
+  if (!currentUser) return;
+
   const userRef = doc(db, "users", currentUser.uid);
   const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return;
+
   const data = snap.data();
 
   document.getElementById("balance").innerText = data.balance + " ALF";
@@ -37,31 +46,40 @@ async function loadWallet() {
   updateTimer(data.lastMine);
 }
 
-function updateTimer(lastMine) {
+/* ⏳ MINING TIMER */
+function updateTimer(lastMine = 0) {
   const now = Date.now();
   const cooldown = 24 * 60 * 60 * 1000;
   const diff = cooldown - (now - lastMine);
 
   if (diff <= 0) {
-    document.getElementById("timer").innerText = "Ready to mine";
+    document.getElementById("timer").innerText = "Ready to mine ⛏️";
     return;
   }
 
   const hrs = Math.floor(diff / (1000 * 60 * 60));
   const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  document.getElementById("timer").innerText = `${hrs}h ${mins}m left`;
+
+  document.getElementById("timer").innerText =
+    `${hrs}h ${mins}m left`;
 }
 
+/* ⛏️ MINING */
 window.startMining = async function () {
+  if (!currentUser) return;
+
   const userRef = doc(db, "users", currentUser.uid);
   const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return;
+
   const data = snap.data();
 
   const now = Date.now();
   const cooldown = 24 * 60 * 60 * 1000;
 
   if (now - data.lastMine < cooldown) {
-    alert("Mining not ready yet");
+    alert("⏳ Subiri masaa 24 kwanza");
     return;
   }
 
@@ -73,8 +91,9 @@ window.startMining = async function () {
   loadWallet();
 };
 
+/* 📋 COPY WALLET */
 window.copyWallet = async function () {
   const wallet = document.getElementById("wallet").innerText;
   await navigator.clipboard.writeText(wallet);
-  alert("Wallet copied");
+  alert("Copied ✔");
 };
