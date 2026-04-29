@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALF Wallet</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 15px;
+  max-width: 400px;
+  margin: auto;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>My ALF Wallet</h1>
+
+  <p><b>Balance:</b> <span id="balance">0 ALF</span></p>
+
+  <p><b>Wallet:</b> <span id="wallet">Loading...</span></p>
+
+  <button onclick="copyWallet()">Copy Wallet</button>
+
+  <hr>
+
+  <p><b>Mining Status</b></p>
+  <p>Reward: 1 ALF / 24h</p>
+
+  <p id="timer">Loading...</p>
+
+  <button onclick="startMining()">Start Mining</button>
+</div>
+
+<!-- LINK TO APP LOGIC -->
+<script type="module" src="./app.js"></script>
+
+</body>
+</html>
