@@ -1,45 +1,16 @@
 import { auth, db } from "./firebase.js";
-
-import {
-  GoogleAuthProvider,
-  signInWithPopup
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 import {
   doc,
   getDoc,
   setDoc,
-  updateDoc
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let currentUser = null;
-
-/* 🔐 GOOGLE LOGIN */
-window.loginWithGoogle = async function () {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-
-    currentUser = result.user;
-
-    const userRef = doc(db, "users", currentUser.uid);
-    const snap = await getDoc(userRef);
-
-    if (!snap.exists()) {
-      await setDoc(userRef, {
-        balance: 0,
-        wallet: currentUser.uid,
-        lastMine: 0
-      });
-    }
-
-    loadWallet();
-
-  } catch (error) {
-    console.error(error);
-    alert("Login failed");
-  }
-};
 
 /* 🔐 AUTH CHECK */
 auth.onAuthStateChanged(async (user) => {
@@ -51,10 +22,15 @@ auth.onAuthStateChanged(async (user) => {
   const snap = await getDoc(userRef);
 
   if (!snap.exists()) {
+    const myRefCode = "ALF" + Math.floor(Math.random() * 1000000);
+
     await setDoc(userRef, {
       balance: 0,
       wallet: user.uid,
-      lastMine: 0
+      lastMine: 0,
+      refCode: myRefCode,
+      referredBy: "",
+      referrals: 0
     });
   }
 
@@ -74,6 +50,10 @@ async function loadWallet() {
 
   document.getElementById("balance").innerText = data.balance + " ALF";
   document.getElementById("wallet").innerText = data.wallet;
+
+  if (document.getElementById("refCode")) {
+    document.getElementById("refCode").innerText = data.refCode;
+  }
 
   updateTimer(data.lastMine);
 }
@@ -131,4 +111,48 @@ window.copyWallet = async function () {
   const wallet = document.getElementById("wallet").innerText;
   await navigator.clipboard.writeText(wallet);
   alert("Copied ✔");
+};
+
+/* 🎁 USE REFERRAL CODE */
+window.useReferralCode = async function () {
+  if (!currentUser) {
+    alert("Login first");
+    return;
+  }
+
+  const code = prompt("Enter referral code");
+  if (!code) return;
+
+  const myRef = doc(db, "users", currentUser.uid);
+  const mySnap = await getDoc(myRef);
+  const myData = mySnap.data();
+
+  if (myData.referredBy && myData.referredBy !== "") {
+    alert("Referral already used");
+    return;
+  }
+
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("refCode", "==", code));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    alert("Invalid referral code");
+    return;
+  }
+
+  const ownerDoc = querySnapshot.docs[0];
+  const ownerRef = doc(db, "users", ownerDoc.id);
+  const ownerData = ownerDoc.data();
+
+  await updateDoc(ownerRef, {
+    balance: ownerData.balance + 5,
+    referrals: ownerData.referrals + 1
+  });
+
+  await updateDoc(myRef, {
+    referredBy: code
+  });
+
+  alert("Referral bonus applied ✔");
 };
