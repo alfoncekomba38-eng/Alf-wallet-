@@ -14,7 +14,9 @@ body {
   text-align: center;
 }
 
-.container { padding: 20px; }
+.container {
+  padding: 20px;
+}
 
 .card {
   background: #1e293b;
@@ -30,7 +32,7 @@ body {
 
 .btn {
   margin: 6px;
-  padding: 10px;
+  padding: 10px 15px;
   border: none;
   border-radius: 8px;
   background: #22c55e;
@@ -78,6 +80,12 @@ body {
     <p>Reward: 1 ALF / 24h</p>
     <p id="timer">Loading...</p>
     <button class="btn" onclick="startMining()">Start Mining</button>
+  </div>
+
+  <div class="card">
+    <p>Your Referral Code</p>
+    <div id="refCode">Loading...</div>
+    <button class="btn" onclick="useReferralCode()">Use Referral Code</button>
   </div>
 </div>
 
