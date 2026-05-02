@@ -1,102 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALF Wallet</title>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
 <style>
 body {
-  margin: 0;
   font-family: Arial;
   background: #0f172a;
   color: white;
   text-align: center;
-}
-
-.container {
   padding: 20px;
 }
-
-.card {
-  background: #1e293b;
-  margin: 15px 0;
-  padding: 20px;
-  border-radius: 15px;
-}
-
-.balance {
-  font-size: 32px;
-  color: #22c55e;
-}
-
-.btn {
-  margin: 6px;
-  padding: 10px 15px;
+button {
+  padding: 12px 20px;
+  margin: 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #22c55e;
   color: white;
-  cursor: pointer;
+  font-size: 16px;
 }
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
+.card {
   background: #1e293b;
-  padding: 10px;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 20px;
 }
-
-.bottom-nav a {
-  color: white;
-  text-decoration: none;
+input {
+  width: 90%;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h1>My ALF Wallet</h1>
+<h1>🚀 ALF Wallet</h1>
 
-  <button class="btn" onclick="loginWithGoogle()">Login with Google</button>
+<button onclick="connectWallet()">Connect Wallet</button>
 
-  <div class="card">
-    <p>Balance</p>
-    <div class="balance" id="balance">0 ALF</div>
-  </div>
-
-  <div class="card">
-    <p>Wallet</p>
-    <div id="wallet">Loading...</div>
-    <button class="btn" onclick="copyWallet()">Copy</button>
-  </div>
-
-  <div class="card">
-    <p>Mining Status</p>
-    <p>Reward: 1 ALF / 24h</p>
-    <p id="timer">Loading...</p>
-    <button class="btn" onclick="startMining()">Start Mining</button>
-  </div>
-
-  <div class="card">
-    <p>Your Referral Code</p>
-    <div id="refCode">Loading...</div>
-    <button class="btn" onclick="useReferralCode()">Use Referral Code</button>
-  </div>
+<div class="card">
+<h2>Balance</h2>
+<p id="balance">0 ALF</p>
 </div>
 
-<div class="bottom-nav">
-  <a href="#">Home</a>
-  <a href="#">Earn</a>
-  <a href="#">Referral</a>
-  <a href="#">Wallet</a>
+<div class="card">
+<h2>Wallet</h2>
+<p id="address">Not connected</p>
+<button onclick="copyAddress()">Copy</button>
 </div>
 
-<script type="module" src="./app.js"></script>
+<div class="card">
+<h2>Buy ALF</h2>
+<a href="https://pancakeswap.finance/swap?outputCurrency=0xEf9c435DC813d4839fdC4b4195C4B3E4F5d3D2F5" target="_blank">
+<button>Buy ALF</button>
+</a>
+</div>
+
+<!-- SEND ALF -->
+<div class="card">
+<h2>Send ALF</h2>
+
+<input id="to" placeholder="Recipient address (0x...)" />
+<input id="amount" placeholder="Amount (ALF)" type="number" step="0.0001" />
+
+<button onclick="sendALF()">Send</button>
+
+<p id="txStatus"></p>
+</div>
+
+<script>
+let provider;
+let signer;
+let userAddress;
+
+// ALF contract
+const contractAddress = "0xEf9c435DC813d4839fdC4b4195C4B3E4F5d3D2F5";
+
+const abi = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function transfer(address to, uint amount) returns (bool)"
+];
+
+async function connectWallet() {
+  if (window.ethereum) {
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+
+    userAddress = await signer.getAddress();
+    document.getElementById("address").innerText = userAddress;
+
+    loadBalance();
+  } else {
+    alert("Install MetaMask or Trust Wallet");
+  }
+}
+
+async function loadBalance() {
+  const contract = new ethers.Contract(contractAddress, abi, provider);
+
+  const rawBalance = await contract.balanceOf(userAddress);
+  const decimals = await contract.decimals();
+
+  const balance = rawBalance / (10 ** decimals);
+
+  document.getElementById("balance").innerText = balance + " ALF";
+}
+
+function copyAddress() {
+  navigator.clipboard.writeText(userAddress);
+  alert("Address copied!");
+}
+
+// SEND FUNCTION
+async function sendALF() {
+  try {
+    const to = document.getElementById("to").value.trim();
+    const amount = document.getElementById("amount").value;
+
+    if (!to || !amount) {
+      alert("Weka address na amount");
+      return;
+    }
+
+    if (!ethers.utils.isAddress(to)) {
+      alert("Address si sahihi");
+      return;
+    }
+
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+
+    const decimals = await contract.decimals();
+    const value = ethers.utils.parseUnits(amount, decimals);
+
+    document.getElementById("txStatus").innerText = "Sending...";
+
+    const tx = await contract.transfer(to, value);
+
+    document.getElementById("txStatus").innerText = "Waiting confirmation...";
+
+    await tx.wait();
+
+    document.getElementById("txStatus").innerText = "✅ Sent successfully!";
+
+    loadBalance();
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("txStatus").innerText = "❌ Transaction failed";
+  }
+}
+</script>
 
 </body>
 </html>
