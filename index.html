@@ -15,9 +15,7 @@ body {
   padding-bottom: 80px;
 }
 
-h2 {
-  color: #1e3a8a;
-}
+h2 { color: #1e3a8a; }
 
 .card {
   background: white;
@@ -70,10 +68,62 @@ button {
   color: #2563eb;
   font-weight: bold;
 }
+
+/* ===== WALLET POPUP ===== */
+.popup-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  width: 260px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  display: none;
+  z-index: 1000;
+  transition: 0.2s;
+}
+
+.popup-menu.active {
+  display: block;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-menu button {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: none;
+}
+
+.overlay.active {
+  display: block;
+}
+
+/* WALLET ICON */
+.wallet-icon {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
+
+<!-- 👛 ICON -->
+<div class="wallet-icon" onclick="toggleMenu()">👛</div>
 
 <h2>👛 WALLET</h2>
 
@@ -87,6 +137,20 @@ button {
 
 <h3>Assets</h3>
 <div id="assets"></div>
+
+<!-- 🔻 POPUP MENU -->
+<div id="walletMenu" class="popup-menu">
+  <h3>Wallet Menu</h3>
+
+  <button onclick="alert('Deposit')">⬇️ Deposit</button>
+  <button onclick="alert('Withdraw')">⬆️ Withdraw</button>
+  <button onclick="alert('Swap')">🔄 Swap</button>
+  <button onclick="alert('History')">📜 History</button>
+
+  <button onclick="toggleMenu()" style="background:red;">Close</button>
+</div>
+
+<div id="overlay" class="overlay" onclick="toggleMenu()"></div>
 
 <!-- 🔻 BOTTOM NAV -->
 <div class="bottom-nav">
@@ -102,35 +166,14 @@ let provider, signer, account;
 
 // TOKENS
 const TOKENS = [
-  {
-    name: "BNB",
-    symbol: "BNB",
-    address: null,
-    decimals: 18,
-    price: 300
-  },
-  {
-    name: "USDT",
-    symbol: "USDT",
-    address: "0x55d398326f99059fF775485246999027B3197955",
-    decimals: 18,
-    price: 1
-  },
-  {
-    name: "ALF",
-    symbol: "ALF",
-    address: "PASTE_YOUR_ALF_TOKEN",
-    decimals: 18,
-    price: 0.01
-  }
+  { name: "BNB", symbol: "BNB", address: null, decimals: 18, price: 300 },
+  { name: "USDT", symbol: "USDT", address: "0x55d398326f99059fF775485246999027B3197955", decimals: 18, price: 1 },
+  { name: "ALF", symbol: "ALF", address: "PASTE_YOUR_ALF_TOKEN", decimals: 18, price: 0.01 }
 ];
 
-// ERC20 ABI
-const erc20 = [
-  "function balanceOf(address) view returns (uint)"
-];
+const erc20 = ["function balanceOf(address) view returns (uint)"];
 
-// CONNECT WALLET
+// CONNECT
 async function connect() {
   if (!window.ethereum) return alert("Install MetaMask");
 
@@ -166,23 +209,15 @@ async function loadBalances() {
         const b = await contract.balanceOf(account);
         balance = parseFloat(ethers.utils.formatUnits(b, t.decimals));
       }
-    } catch (err) {
-      console.log("Error loading", t.symbol);
-    }
+    } catch {}
 
     const usd = balance * t.price;
     totalUSD += usd;
 
     container.innerHTML += `
       <div class="asset">
-        <div>
-          <b>${t.symbol}</b><br>
-          $${t.price}
-        </div>
-        <div>
-          ${balance.toFixed(4)}<br>
-          $${usd.toFixed(2)}
-        </div>
+        <div><b>${t.symbol}</b><br>$${t.price}</div>
+        <div>${balance.toFixed(4)}<br>$${usd.toFixed(2)}</div>
       </div>
     `;
   }
@@ -191,19 +226,21 @@ async function loadBalances() {
     "$" + totalUSD.toFixed(2);
 }
 
-// NAVIGATION
+// NAV
 function goTab(e, tab) {
-
-  document.querySelectorAll(".nav-item").forEach(el=>{
-    el.classList.remove("active");
-  });
-
+  document.querySelectorAll(".nav-item").forEach(el=>el.classList.remove("active"));
   e.currentTarget.classList.add("active");
 
-  if(tab === "home") alert("🏠 Home");
-  if(tab === "earn") alert("💰 Earn coming soon");
-  if(tab === "refer") alert("👥 Referral page");
-  if(tab === "wallet") alert("👛 You are here");
+  if(tab==="home") alert("🏠 Home");
+  if(tab==="earn") alert("💰 Earn coming soon");
+  if(tab==="refer") alert("👥 Referral");
+  if(tab==="wallet") alert("👛 Wallet");
+}
+
+// POPUP MENU
+function toggleMenu() {
+  document.getElementById("walletMenu").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
 }
 
 </script>
