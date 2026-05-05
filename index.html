@@ -10,7 +10,9 @@
 body {
   font-family: Arial;
   background: #eef3f8;
+  margin: 0;
   padding: 10px;
+  padding-bottom: 80px;
 }
 
 h2 {
@@ -40,13 +42,40 @@ button {
   border-radius: 8px;
   background: #2563eb;
   color: white;
+  cursor: pointer;
+}
+
+/* ===== Bottom Nav ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #ddd;
+}
+
+.nav-item {
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.nav-item.active {
+  color: #2563eb;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
 
-<h2>WALLET</h2>
+<h2>👛 WALLET</h2>
 
 <div class="card">
   <button onclick="connect()">🔌 Connect Wallet</button>
@@ -57,20 +86,28 @@ button {
 </div>
 
 <h3>Assets</h3>
-
 <div id="assets"></div>
+
+<!-- 🔻 BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="goTab(event,'home')">🏠<br>Home</div>
+  <div class="nav-item" onclick="goTab(event,'earn')">💰<br>Earn</div>
+  <div class="nav-item" onclick="goTab(event,'refer')">👥<br>Refer</div>
+  <div class="nav-item" onclick="goTab(event,'wallet')">👛<br>Wallet</div>
+</div>
 
 <script>
 
 let provider, signer, account;
 
+// TOKENS
 const TOKENS = [
   {
     name: "BNB",
     symbol: "BNB",
     address: null,
     decimals: 18,
-    price: 300 // example
+    price: 300
   },
   {
     name: "USDT",
@@ -93,7 +130,7 @@ const erc20 = [
   "function balanceOf(address) view returns (uint)"
 ];
 
-// CONNECT
+// CONNECT WALLET
 async function connect() {
   if (!window.ethereum) return alert("Install MetaMask");
 
@@ -120,14 +157,17 @@ async function loadBalances() {
 
     let balance = 0;
 
-    if (t.address === null) {
-      // native coin (BNB)
-      const b = await provider.getBalance(account);
-      balance = parseFloat(ethers.utils.formatEther(b));
-    } else {
-      const contract = new ethers.Contract(t.address, erc20, provider);
-      const b = await contract.balanceOf(account);
-      balance = parseFloat(ethers.utils.formatUnits(b, t.decimals));
+    try {
+      if (t.address === null) {
+        const b = await provider.getBalance(account);
+        balance = parseFloat(ethers.utils.formatEther(b));
+      } else {
+        const contract = new ethers.Contract(t.address, erc20, provider);
+        const b = await contract.balanceOf(account);
+        balance = parseFloat(ethers.utils.formatUnits(b, t.decimals));
+      }
+    } catch (err) {
+      console.log("Error loading", t.symbol);
     }
 
     const usd = balance * t.price;
@@ -149,6 +189,21 @@ async function loadBalances() {
 
   document.getElementById("total").innerText =
     "$" + totalUSD.toFixed(2);
+}
+
+// NAVIGATION
+function goTab(e, tab) {
+
+  document.querySelectorAll(".nav-item").forEach(el=>{
+    el.classList.remove("active");
+  });
+
+  e.currentTarget.classList.add("active");
+
+  if(tab === "home") alert("🏠 Home");
+  if(tab === "earn") alert("💰 Earn coming soon");
+  if(tab === "refer") alert("👥 Referral page");
+  if(tab === "wallet") alert("👛 You are here");
 }
 
 </script>
