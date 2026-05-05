@@ -128,8 +128,8 @@ button {
 <h2>👛 WALLET</h2>
 
 <div class="card">
-  <button onclick="connect()">🔌 Connect Wallet</button>
-  <p id="address">Not connected</p>
+
+  <p id="address">👛 Wallet ready</p>
 
   <h3>Total Assets</h3>
   <h1 id="total">$0.00</h1>
@@ -173,7 +173,7 @@ const TOKENS = [
 
 const erc20 = ["function balanceOf(address) view returns (uint)"];
 
-// CONNECT
+// OPTIONAL CONNECT (HAITUMIKI SASA LAKINI IMEBAKI)
 async function connect() {
   if (!window.ethereum) return alert("Install MetaMask");
 
@@ -192,6 +192,8 @@ async function connect() {
 // LOAD BALANCES
 async function loadBalances() {
 
+  if (!provider) return;
+
   let totalUSD = 0;
   const container = document.getElementById("assets");
   container.innerHTML = "";
@@ -209,7 +211,9 @@ async function loadBalances() {
         const b = await contract.balanceOf(account);
         balance = parseFloat(ethers.utils.formatUnits(b, t.decimals));
       }
-    } catch {}
+    } catch (e) {
+      console.log("Balance error:", e);
+    }
 
     const usd = balance * t.price;
     totalUSD += usd;
