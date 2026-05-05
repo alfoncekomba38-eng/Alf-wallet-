@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALF Wallet</title>
+<title>ALF Presale</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
@@ -12,152 +12,79 @@ body {
   background: #0f172a;
   color: white;
   text-align: center;
-  padding: 20px;
 }
 button {
-  padding: 12px 20px;
+  padding: 12px;
   margin: 10px;
-  border: none;
-  border-radius: 10px;
   background: #22c55e;
-  color: white;
-  font-size: 16px;
-}
-.card {
-  background: #1e293b;
-  padding: 20px;
-  border-radius: 15px;
-  margin-top: 20px;
+  border: none;
+  border-radius: 8px;
 }
 input {
-  width: 90%;
   padding: 10px;
-  margin: 5px;
   border-radius: 8px;
-  border: none;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🚀 ALF Wallet</h1>
+<h1>🚀 ALF PRESALE</h1>
 
-<button onclick="connectWallet()">Connect Wallet</button>
+<button onclick="connect()">Connect Wallet</button>
+<p id="wallet"></p>
 
-<div class="card">
-<h2>Balance</h2>
-<p id="balance">0 ALF</p>
-</div>
-
-<div class="card">
-<h2>Wallet</h2>
-<p id="address">Not connected</p>
-<button onclick="copyAddress()">Copy</button>
-</div>
-
-<div class="card">
-<h2>Buy ALF</h2>
-<a href="https://pancakeswap.finance/swap?outputCurrency=0xEf9c435DC813d4839fdC4b4195C4B3E4F5d3D2F5" target="_blank">
-<button>Buy ALF</button>
-</a>
-</div>
-
-<!-- SEND ALF -->
-<div class="card">
-<h2>Send ALF</h2>
-
-<input id="to" placeholder="Recipient address (0x...)" />
-<input id="amount" placeholder="Amount (ALF)" type="number" step="0.0001" />
-
-<button onclick="sendALF()">Send</button>
-
-<p id="txStatus"></p>
-</div>
+<h3>💰 Buy ALF</h3>
+<input id="amount" placeholder="Enter USDT amount">
+<br>
+<button onclick="buy()">Buy Now</button>
 
 <script>
-let provider;
-let signer;
-let userAddress;
 
-// ALF contract
-const contractAddress = "0xEf9c435DC813d4839fdC4b4195C4B3E4F5d3D2F5";
+let account;
 
-const abi = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function transfer(address to, uint amount) returns (bool)"
+// 👉 badilisha hizi
+const PRESALE = "PASTE_YOUR_CONTRACT";
+const USDT = "0x55d398326f99059fF775485246999027B3197955";
+
+const presaleABI = [
+  "function buyWithUSDT(uint amount) external"
 ];
 
-async function connectWallet() {
-  if (window.ethereum) {
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
+const usdtABI = [
+  "function approve(address spender, uint amount) external returns (bool)"
+];
 
-    userAddress = await signer.getAddress();
-    document.getElementById("address").innerText = userAddress;
+async function connect(){
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  const signer = provider.getSigner();
 
-    loadBalance();
-  } else {
-    alert("Install MetaMask or Trust Wallet");
-  }
+  account = await signer.getAddress();
+  document.getElementById("wallet").innerText = account;
 }
 
-async function loadBalance() {
-  const contract = new ethers.Contract(contractAddress, abi, provider);
+async function buy(){
 
-  const rawBalance = await contract.balanceOf(userAddress);
-  const decimals = await contract.decimals();
+  const amount = document.getElementById("amount").value;
 
-  const balance = rawBalance / (10 ** decimals);
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
 
-  document.getElementById("balance").innerText = balance + " ALF";
+  const usdt = new ethers.Contract(USDT, usdtABI, signer);
+  const presale = new ethers.Contract(PRESALE, presaleABI, signer);
+
+  const value = ethers.utils.parseUnits(amount, 18);
+
+  // approve USDT
+  await usdt.approve(PRESALE, value);
+
+  // buy
+  await presale.buyWithUSDT(value);
+
+  alert("Success! ALF received 🚀");
 }
 
-function copyAddress() {
-  navigator.clipboard.writeText(userAddress);
-  alert("Address copied!");
-}
-
-// SEND FUNCTION
-async function sendALF() {
-  try {
-    const to = document.getElementById("to").value.trim();
-    const amount = document.getElementById("amount").value;
-
-    if (!to || !amount) {
-      alert("Weka address na amount");
-      return;
-    }
-
-    if (!ethers.utils.isAddress(to)) {
-      alert("Address si sahihi");
-      return;
-    }
-
-    const contract = new ethers.Contract(contractAddress, abi, signer);
-
-    const decimals = await contract.decimals();
-    const value = ethers.utils.parseUnits(amount, decimals);
-
-    document.getElementById("txStatus").innerText = "Sending...";
-
-    const tx = await contract.transfer(to, value);
-
-    document.getElementById("txStatus").innerText = "Waiting confirmation...";
-
-    await tx.wait();
-
-    document.getElementById("txStatus").innerText = "✅ Sent successfully!";
-
-    loadBalance();
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("txStatus").innerText = "❌ Transaction failed";
-  }
-}
 </script>
 
 </body>
