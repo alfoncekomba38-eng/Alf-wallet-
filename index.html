@@ -77,14 +77,16 @@ small {
 <script>
 
 // ========================
-// BASIC CONFIG
+// CONFIG
 // ========================
-let account;
+let account = null;
 const RATE = 500;
 
-// Firebase mock storage (replace with Firestore later)
+// ========================
+// LOCAL STORAGE HELPERS
+// ========================
 function getRewards(addr){
-  return localStorage.getItem("reward_" + addr) || 0;
+  return parseInt(localStorage.getItem("reward_" + addr)) || 0;
 }
 
 function saveRewards(addr, value){
@@ -92,34 +94,48 @@ function saveRewards(addr, value){
 }
 
 // ========================
-// CONNECT WALLET
+// CONNECT WALLET (FIXED)
 // ========================
 async function connectWallet() {
-  if (!window.ethereum) return alert("Install MetaMask");
+  if (!window.ethereum) {
+    alert("Install MetaMask");
+    return;
+  }
 
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  const signer = provider.getSigner();
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
 
-  account = await signer.getAddress();
-  document.getElementById("wallet").innerText = account;
+    const signer = provider.getSigner();
+    account = await signer.getAddress();
 
-  // referral link
-  const link = window.location.origin + "?ref=" + account;
-  document.getElementById("refLink").innerText = link;
+    // short address
+    const short =
+      account.slice(0, 6) + "..." + account.slice(-4);
 
-  loadRewards();
-  handleReferral();
+    document.getElementById("wallet").innerText = short;
+
+    // referral link
+    const link = window.location.origin + "?ref=" + account;
+    document.getElementById("refLink").innerText = link;
+
+    handleReferral();
+    loadRewards();
+
+  } catch (err) {
+    console.error(err);
+    alert("Wallet connection failed ❌");
+  }
 }
 
 // ========================
-// REFERRAL SYSTEM
+// REFERRAL SYSTEM (FIXED FLOW)
 // ========================
-function handleReferral(){
+function handleReferral() {
   const urlParams = new URLSearchParams(window.location.search);
   const ref = urlParams.get("ref");
 
-  if(ref && ref !== account){
+  if (ref && account && ref !== account) {
     localStorage.setItem("ref_" + account, ref);
   }
 }
@@ -127,26 +143,34 @@ function handleReferral(){
 // ========================
 // LIVE PREVIEW
 // ========================
-document.getElementById("amount").addEventListener("input", function(){
+document.getElementById("amount").addEventListener("input", function () {
   const val = this.value || 0;
   document.getElementById("preview").innerText =
     "You will receive: " + (val * RATE) + " ALF";
 });
 
 // ========================
-// BUY FUNCTION (SIMULATED + READY FOR CONTRACT)
+// BUY FUNCTION (SIMULATED)
 // ========================
-async function buy(){
+async function buy() {
+
+  if (!account) {
+    alert("Connect wallet first");
+    return;
+  }
 
   const amount = document.getElementById("amount").value;
-  if(!amount) return alert("Enter amount");
+
+  if (!amount) {
+    alert("Enter amount");
+    return;
+  }
 
   alert("Processing purchase... 🚀");
 
-  // 👉 HERE you will connect smart contract later
-  console.log("Buying with USDT:", amount);
+  console.log("Buying USDT:", amount);
 
-  // REFERRAL REWARD
+  // REFERRAL REWARD TRIGGER
   rewardRef(account);
 
   alert("Success! ALF received 🎉");
@@ -155,24 +179,24 @@ async function buy(){
 }
 
 // ========================
-// REFERRAL REWARD LOGIC
+// REFERRAL REWARD ENGINE
 // ========================
-function rewardRef(user){
+function rewardRef(user) {
 
   const referrer = localStorage.getItem("ref_" + user);
-  if(!referrer) return;
+  if (!referrer) return;
 
-  let rewards = parseInt(getRewards(referrer));
+  let rewards = getRewards(referrer);
   rewards += 1000;
 
   saveRewards(referrer, rewards);
 }
 
 // ========================
-// LOAD REWARDS
+// LOAD REWARDS UI
 // ========================
-function loadRewards(){
-  if(!account) return;
+function loadRewards() {
+  if (!account) return;
   document.getElementById("rewards").innerText = getRewards(account);
 }
 
