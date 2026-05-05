@@ -20,7 +20,7 @@ body {
   padding: 15px;
   margin: 10px auto;
   border-radius: 10px;
-  max-width: 400px;
+  max-width: 420px;
 }
 
 input, button {
@@ -40,6 +40,10 @@ button {
 button:hover {
   background: #16a34a;
 }
+
+small {
+  word-break: break-all;
+}
 </style>
 </head>
 
@@ -48,7 +52,7 @@ button:hover {
 <h2>🚀 ALF Token Presale</h2>
 
 <div class="card">
-  <button onclick="connect()">🔌 Connect Wallet</button>
+  <button onclick="connectWallet()">🔌 Connect Wallet</button>
   <p id="wallet">Not connected</p>
 </div>
 
@@ -62,38 +66,35 @@ button:hover {
 <div class="card">
   <h3>🔗 Referral</h3>
   <p>Your Link:</p>
-  <p id="refLink">-</p>
+  <small id="refLink">-</small>
+</div>
 
+<div class="card">
   <h3>🎁 Rewards</h3>
-  <p><span id="refRewards">0</span> ALF</p>
+  <p><span id="rewards">0</span> ALF</p>
 </div>
 
 <script>
 
+// ========================
+// BASIC CONFIG
+// ========================
 let account;
-
-// ⚠️ CHANGE THESE
-const PRESALE = "PASTE_YOUR_PRESALE_CONTRACT";
-const USDT = "0x55d398326f99059fF775485246999027B3197955";
-
-// RATE
 const RATE = 500;
 
-// ABI
-const presaleABI = [
-  "function buyWithUSDT(uint amount) external"
-];
+// Firebase mock storage (replace with Firestore later)
+function getRewards(addr){
+  return localStorage.getItem("reward_" + addr) || 0;
+}
 
-const usdtABI = [
-  "function approve(address spender, uint amount) external returns (bool)"
-];
+function saveRewards(addr, value){
+  localStorage.setItem("reward_" + addr, value);
+}
 
-// GET REF FROM URL
-const urlParams = new URLSearchParams(window.location.search);
-const ref = urlParams.get("ref");
-
+// ========================
 // CONNECT WALLET
-async function connect() {
+// ========================
+async function connectWallet() {
   if (!window.ethereum) return alert("Install MetaMask");
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -101,68 +102,78 @@ async function connect() {
   const signer = provider.getSigner();
 
   account = await signer.getAddress();
-
   document.getElementById("wallet").innerText = account;
 
-  // REF LINK
+  // referral link
   const link = window.location.origin + "?ref=" + account;
   document.getElementById("refLink").innerText = link;
 
-  // SAVE REFERRER
-  if (ref && ref !== account) {
+  loadRewards();
+  handleReferral();
+}
+
+// ========================
+// REFERRAL SYSTEM
+// ========================
+function handleReferral(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const ref = urlParams.get("ref");
+
+  if(ref && ref !== account){
     localStorage.setItem("ref_" + account, ref);
   }
+}
+
+// ========================
+// LIVE PREVIEW
+// ========================
+document.getElementById("amount").addEventListener("input", function(){
+  const val = this.value || 0;
+  document.getElementById("preview").innerText =
+    "You will receive: " + (val * RATE) + " ALF";
+});
+
+// ========================
+// BUY FUNCTION (SIMULATED + READY FOR CONTRACT)
+// ========================
+async function buy(){
+
+  const amount = document.getElementById("amount").value;
+  if(!amount) return alert("Enter amount");
+
+  alert("Processing purchase... 🚀");
+
+  // 👉 HERE you will connect smart contract later
+  console.log("Buying with USDT:", amount);
+
+  // REFERRAL REWARD
+  rewardRef(account);
+
+  alert("Success! ALF received 🎉");
 
   loadRewards();
 }
 
-// LIVE PREVIEW
-document.getElementById("amount").addEventListener("input", function () {
-  const val = this.value || 0;
-  const alf = val * RATE;
-
-  document.getElementById("preview").innerText =
-    "You will receive: " + alf + " ALF";
-});
-
-// BUY
-async function buy() {
-
-  const amount = document.getElementById("amount").value;
-  if (!amount) return alert("Enter amount");
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-
-  const usdt = new ethers.Contract(USDT, usdtABI, signer);
-  const presale = new ethers.Contract(PRESALE, presaleABI, signer);
-
-  const value = ethers.utils.parseUnits(amount, 18);
-
-  await usdt.approve(PRESALE, value);
-  await presale.buyWithUSDT(value);
-
-  rewardReferrer(account);
-
-  alert("Success! ALF purchased 🚀");
-}
-
-// REFERRAL REWARD
-function rewardReferrer(user) {
+// ========================
+// REFERRAL REWARD LOGIC
+// ========================
+function rewardRef(user){
 
   const referrer = localStorage.getItem("ref_" + user);
-  if (!referrer) return;
+  if(!referrer) return;
 
-  let rewards = localStorage.getItem("reward_" + referrer) || 0;
-  rewards = parseInt(rewards) + 1000;
+  let rewards = parseInt(getRewards(referrer));
+  rewards += 1000;
 
-  localStorage.setItem("reward_" + referrer, rewards);
+  saveRewards(referrer, rewards);
 }
 
+// ========================
 // LOAD REWARDS
-function loadRewards() {
-  let rewards = localStorage.getItem("reward_" + account) || 0;
-  document.getElementById("refRewards").innerText = rewards;
+// ========================
+function loadRewards(){
+  if(!account) return;
+  document.getElementById("rewards").innerText = getRewards(account);
 }
 
 </script>
